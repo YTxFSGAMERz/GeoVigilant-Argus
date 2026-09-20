@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "pull-env": "python scripts/pull_env.py"
+    "pull-env": "python scripts/pull_env.py",
+    "push-env": "python scripts/upload_secrets_to_hf.py"
   },
   "devDependencies": {
     "vite": "^7.3.1",

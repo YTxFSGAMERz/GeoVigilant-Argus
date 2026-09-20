@@ -1,0 +1,367 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   GEOVIGILANT ARGUS EYE — TACTICAL KIOSK & SECURITY SUITE
+   MULTI-DOMAIN GEOINT // REAL-TIME INTELLIGENCE PLATFORM
+   ═══════════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap');
+
+/* ─── 1. CYBERNETIC TEXT & ELEMENT HIGHLIGHTS (EVERYWHERE) ───────────── */
+::selection {
+    background: #00ffd1 !important;
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+::-moz-selection {
+    background: #00ffd1 !important;
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+input::selection,
+textarea::selection,
+[contenteditable="true"]::selection {
+    background: #00ffd1 !important;
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+/* Tactical Focus Glow on form controls */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: 1px solid rgba(0, 255, 209, 0.85) !important;
+    box-shadow: 0 0 10px rgba(0, 255, 209, 0.35) !important;
+}
+
+/* ─── 2. UNIVERSAL EXHIBITION LOADER ─────────────────────────────────── */
+#argus-expo-loader,
+#loader.argus-unified-loader {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000000 !important;
+    z-index: 99999999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 14px !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s !important;
+    pointer-events: auto;
+}
+
+#argus-expo-loader.argus-loader-hidden,
+#loader.argus-unified-loader.argus-loader-hidden,
+#loader.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Earth Logo */
+.argus-loader-logo,
+#loader .l-logo {
+    font-size: 56px !important;
+    line-height: 1 !important;
+    animation: argusGlobeFloat 3s ease-in-out infinite !important;
+    filter: drop-shadow(0 0 16px rgba(0, 255, 209, 0.5));
+    user-select: none;
+}
+
+/* Title */
+.argus-loader-title,
+#loader .l-title {
+    font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    letter-spacing: 6px !important;
+    color: #00ffd1 !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 0 14px rgba(0, 255, 209, 0.45);
+    margin: 0 !important;
+    text-align: center !important;
+}
+
+/* Subtitle */
+.argus-loader-subtitle,
+#loader .l-subtitle {
+    font-family: 'Share Tech Mono', Consolas, "Courier New", monospace !important;
+    font-size: 15.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: 3px !important;
+    color: #ffcc00 !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+    margin: 0 !important;
+    text-align: center !important;
+}
+
+/* Bar Wrapper */
+.argus-loader-bar-wrap,
+#loader .l-bar-wrap {
+    width: 340px !important;
+    max-width: 86vw !important;
+    height: 3px !important;
+    background: rgba(0, 255, 209, 0.12) !important;
+    border: 1px solid rgba(0, 255, 209, 0.25) !important;
+    border-radius: 2px !important;
+    overflow: hidden !important;
+    margin: 4px 0 !important;
+    position: relative !important;
+}
+
+/* Bar Fill */
+.argus-loader-bar,
+#loader .l-bar {
+    height: 100% !important;
+    background: #00ffd1 !important;
+    width: 0%;
+    box-shadow: 0 0 12px #00ffd1, 0 0 4px #00ffd1 !important;
+    transition: width 0.12s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Percent Counter */
+.argus-loader-pct,
+#loader .l-pct {
+    font-family: 'Share Tech Mono', Consolas, monospace !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    color: #00ffd1 !important;
+    letter-spacing: 1.5px !important;
+    margin: 0 !important;
+}
+
+/* Status Line */
+.argus-loader-status,
+#loader .l-status {
+    font-family: 'Share Tech Mono', Consolas, monospace !important;
+    font-size: 13.5px !important;
+    color: rgba(0, 255, 209, 0.6) !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    text-align: center !important;
+    margin: 0 !important;
+    max-width: 90vw !important;
+    transition: color 0.3s ease;
+}
+
+@keyframes argusGlobeFloat {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-7px) scale(1.04);
+    }
+}
+
+/* ─── 3. TACTICAL CUSTOM RIGHT-CLICK CONTEXT MENU ───────────────────── */
+#argus-context-menu {
+    position: fixed;
+    display: none;
+    z-index: 100000000;
+    min-width: 260px;
+    background: rgba(3, 10, 18, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 255, 209, 0.45);
+    border-radius: 4px;
+    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 255, 209, 0.25);
+    padding: 8px 0;
+    font-family: 'Share Tech Mono', Consolas, monospace;
+    user-select: none;
+    -webkit-user-select: none;
+    animation: argusMenuFade 0.12s ease-out;
+}
+
+#argus-context-menu::before,
+#argus-context-menu::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: #00ffd1;
+    border-style: solid;
+    pointer-events: none;
+}
+
+#argus-context-menu::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+}
+
+#argus-context-menu::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+}
+
+@keyframes argusMenuFade {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.argus-menu-header {
+    padding: 8px 16px 10px;
+    border-bottom: 1px solid rgba(0, 255, 209, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    letter-spacing: 1.2px;
+    color: rgba(0, 255, 209, 0.75);
+    text-transform: uppercase;
+}
+
+.argus-menu-header-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00ffd1;
+    box-shadow: 0 0 8px #00ffd1;
+    display: inline-block;
+    margin-right: 6px;
+    animation: argusPulseDot 1.5s infinite;
+}
+
+@keyframes argusPulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.argus-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    color: #c9e4e4;
+    font-size: 14.5px;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.argus-menu-item:hover {
+    background: rgba(0, 255, 209, 0.14);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 #00ffd1;
+}
+
+.argus-menu-item.danger:hover {
+    background: rgba(255, 0, 85, 0.16);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 #ff0055;
+}
+
+.argus-menu-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.argus-menu-icon {
+    width: 18px;
+    text-align: center;
+    color: #00ffd1;
+    font-size: 14.5px;
+}
+
+.argus-menu-item.danger .argus-menu-icon {
+    color: #ff0055;
+}
+
+.argus-menu-badge {
+    font-size: 13px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: rgba(0, 255, 209, 0.1);
+    border: 1px solid rgba(0, 255, 209, 0.3);
+    color: #00ffd1;
+}
+
+.argus-menu-separator {
+    height: 1px;
+    background: rgba(0, 255, 209, 0.15);
+    margin: 5px 0;
+}
+
+.argus-menu-footer {
+    padding: 8px 16px 4px;
+    font-size: 13px;
+    color: rgba(255, 204, 0, 0.7);
+    letter-spacing: 1px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* ─── 4. TACTICAL HUD SECURITY ALERT TOAST ──────────────────────────── */
+#argus-security-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100000001;
+    background: rgba(14, 2, 6, 0.96);
+    border: 1px solid #ff0055;
+    box-shadow: 0 0 25px rgba(255, 0, 85, 0.45), 0 8px 30px rgba(0, 0, 0, 0.9);
+    border-radius: 4px;
+    padding: 14px 20px;
+    color: #ffffff;
+    font-family: 'Share Tech Mono', Consolas, monospace;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 480px;
+}
+
+#argus-security-toast.argus-toast-show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.argus-toast-icon {
+    font-size: 24px;
+    color: #ff0055;
+    animation: argusToastPulse 1s infinite alternate;
+}
+
+@keyframes argusToastPulse {
+    from { filter: drop-shadow(0 0 3px #ff0055); }
+    to { filter: drop-shadow(0 0 10px #ff0055); }
+}
+
+.argus-toast-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.argus-toast-title {
+    font-size: 13.5px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    color: #ff0055;
+    text-transform: uppercase;
+}
+
+.argus-toast-msg {
+    font-size: 14px;
+    color: #e0e0e0;
+    letter-spacing: 0.8px;
+}

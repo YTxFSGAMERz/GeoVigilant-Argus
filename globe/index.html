@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoVigilant Argus Eye</title>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vigilant-sphere-geospectra-argus-eye.vercel.app/" />
+    <meta property="og:title" content="GeoVigilant Argus Eye" />
+    <meta property="og:description" content="Advanced 3D Globe Visualization and Geospatial Intelligence HUD." />
+    <meta property="og:image" content="/static/cover-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://vigilant-sphere-geospectra-argus-eye.vercel.app/" />
+    <meta property="twitter:title" content="GeoVigilant Argus Eye" />
+    <meta property="twitter:description" content="Advanced 3D Globe Visualization and Geospatial Intelligence HUD." />
+    <meta property="twitter:image" content="/static/cover-image.png" />
+
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>" />
+    <!-- Cesium.js -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+    <!-- Application Styles -->
+    <link rel="stylesheet" href="/static/css/globe-style.css">
+
+    <link rel="stylesheet" href="/static/css/cyberpunk.css">
+    <link rel="stylesheet" href="/static/css/argus-ai.css">
+    <link rel="stylesheet" href="/static/vendor/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/argus-kiosk.css">
+    <script src="/static/js/argus-kiosk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 3D Globe Viewer -->
+        <div id="cesiumContainer"></div>
+
+        <!-- Visual Mode Overlay (Full screen) -->
+        <div id="visual-mode-overlay"></div>
+
+        <!-- UI Layer -->
+        <div id="ui-layer">
+            <!-- Background Tint (Weather Mode) -->
+            <div id="weather-tint-overlay" class="hidden"></div>
+
+            <!-- PANOPTIC Detection Overlay -->
+            <div id="panoptic-container"></div>
+
+            <!-- Corner Brackets -->
+            <div class="corner-bracket top-left"></div>
+            <div class="corner-bracket top-right"></div>
+            <div class="corner-bracket bottom-left"></div>
+            <div class="corner-bracket bottom-right"></div>
+
+            <!-- Classification Header -->
+            <header id="classification-header">
+                <div class="header-left">TOP SECRET // SI-TK // NOFORN</div>
+                <div class="header-center">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round" class="globe-icon">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                        </path>
+                    </svg>
+                    <span>GeoVigilant Argus Eye</span>
+                    <button class="header-action-btn" id="btn-pizzint">🍕 PIZZINT</button>
+                    <button class="header-action-btn border-glow-cyan open-argus-ai" id="btn-argus-core" style="color: var(--cyber-cyan); border: 1px solid var(--cyber-cyan); font-weight: bold; background: rgba(0,255,209,0.15); cursor: pointer;" title="Open ARGUS AI Tactical Assistant">🛡 ARGUS CORE</button>
+                </div>
+                <div class="header-right">
+                    <button class="header-action-btn" id="btn-intel-feed">📡 INTEL</button>
+                    <span>KH11-4166 OPS-4117</span>
+                    <span id="recording-timestamp">REC 0000-00-00 00:00:00Z</span>
+                </div>
+            </header>
+
+            <!-- Breaking News Ticker -->
+            <div id="breaking-news-ticker" class="hidden">
+                <span class="ticker-label">⚠ BREAKING</span>
+                <div class="ticker-content">
+                    <span id="ticker-text">MONITORING GLOBAL SIGNALS...</span>
+                </div>
+            </div>
+
+            <!-- PizzINT Dropdown Panel -->
+            <div id="pizzint-panel" class="hud-panel hidden">
+                <div class="pizzint-header">
+                    <h3 class="text-red blink">PENTAGON PIZZA INDEX</h3>
+                    <button id="close-pizzint-btn">[X]</button>
+                </div>
+                <div class="pizzint-content terminal-text">
+                    <p>Current Threat Level: <span class="text-red">ELEVATED</span></p>
+                    <div class="meter-bar">
+                        <div class="meter-fill bg-red" style="width: 75%"></div>
+                    </div>
+                    <ul class="piz-list">
+                        <li><span>HQ (Arlington):</span> <span class="text-red">High Vol.</span></li>
+                        <li><span>CIA (Langley):</span> <span class="text-cyan">Normal</span></li>
+                        <li><span>NSA (Ft Meade):</span> <span class="text-cyan">Normal</span></li>
+                    </ul>
+                    <p class="text-muted mt-2">> Late-night pizza deliveries suggest escalated ops.</p>
+                </div>
+            </div>
+
+            <!-- Main Layout Grid -->
+            <div id="main-content">
+
+                <!-- Sidebar -->
+                <aside id="sidebar" class="hud-panel">
+                    <div class="sidebar-header">
+                        <h2>GeoVigilant Argus Eye ~Made by YTxFSGAMERz v1.1.0</h2>
+                        <button id="toggle-sidebar-btn" title="Toggle Sidebar (Cmd+[)">[||]</button>
+                    </div>
+
+                    <div class="sidebar-scroll">
+                        <div class="sidebar-section">
+                            <h3>CYBER-PHYSICAL INTEL</h3>
+                            <div class="layer-toggle" data-layer="argusNodes">
+                                <span class="label glow-cyan">🛡 ARGUS NODES</span>
+                                <span class="count" id="count-argusNodes" style="color: var(--cyber-cyan);">3 NODES</span>
+                                <button class="toggle-btn active" id="btn-argusNodes">ON</button>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <h3>DATA LAYERS</h3>
+                            <div class="layer-toggle" data-layer="flights">
+                                <span class="label">✈️ LIVE FLIGHTS</span>
+                                <span class="count" id="count-flights">--</span>
+                                <button class="toggle-btn" id="btn-flights">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="vessels">
+                                <span class="label">🚢 LIVE VESSELS</span>
+                                <span class="count" id="count-vessels">--</span>
+                                <button class="toggle-btn" id="btn-vessels">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="satellites">
+                                <span class="label">🛰️ SATELLITES</span>
+                                <span class="count" id="count-satellites">--</span>
+                                <button class="toggle-btn" id="btn-satellites">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="earthquakes">
+                                <span class="label">🌍 EARTHQUAKES</span>
+                                <span class="count" id="count-earthquakes">--</span>
+                                <button class="toggle-btn" id="btn-earthquakes">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="weather">
+                                <span class="label">🌦️ WEATHER RADAR</span>
+                                <span class="count" id="count-weather">--</span>
+                                <button class="toggle-btn" id="btn-weather">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="cctv">
+                                <span class="label">📹 CCTV CAMERAS</span>
+                                <span class="count" id="count-cctv">--</span>
+                                <button class="toggle-btn" id="btn-cctv">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="military">
+                                <span class="label">🏛️ MILITARY BASES</span>
+                                <span class="count" id="count-military">--</span>
+                                <button class="toggle-btn" id="btn-military">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="nuclear">
+                                <span class="label">☢️ NUCLEAR SITES</span>
+                                <span class="count" id="count-nuclear">--</span>
+                                <button class="toggle-btn" id="btn-nuclear">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="conflicts">
+                                <span class="label">⚔️ CONFLICT ZONES</span>
+                                <span class="count" id="count-conflicts">--</span>
+                                <button class="toggle-btn" id="btn-conflicts">OFF</button>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <h3>INTEL LAYERS</h3>
+                            <div class="layer-toggle" data-layer="hotspots">
+                                <span class="label">🎯 INTEL HOTSPOTS</span>
+                                <span class="count" id="count-hotspots">--</span>
+                                <button class="toggle-btn" id="btn-hotspots">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="waterways">
+                                <span class="label">⚓ WATERWAYS</span>
+                                <span class="count" id="count-waterways">--</span>
+                                <button class="toggle-btn" id="btn-waterways">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="cables">
+                                <span class="label">🔌 UNDERSEA CABLES</span>
+                                <span class="count" id="count-cables">--</span>
+                                <button class="toggle-btn" id="btn-cables">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="naturalEvents">
+                                <span class="label">🌋 NATURAL EVENTS</span>
+                                <span class="count" id="count-naturalEvents">--</span>
+                                <button class="toggle-btn" id="btn-naturalEvents">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="wildfires">
+                                <span class="label">🔥 WILDFIRES</span>
+                                <span class="count" id="count-wildfires">--</span>
+                                <button class="toggle-btn" id="btn-wildfires">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="weatherAlerts">
+                                <span class="label">⛈ WEATHER ALERTS</span>
+                                <span class="count" id="count-weatherAlerts">--</span>
+                                <button class="toggle-btn" id="btn-weatherAlerts">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="spaceports">
+                                <span class="label">🚀 SPACEPORTS</span>
+                                <span class="count" id="count-spaceports">--</span>
+                                <button class="toggle-btn" id="btn-spaceports">OFF</button>
+                            </div>
+                            <div class="layer-toggle" data-layer="economic">
+                                <span class="label">💰 ECONOMIC CENTERS</span>
+                                <span class="count" id="count-economic">--</span>
+                                <button class="toggle-btn" id="btn-economic">OFF</button>
+                            </div>
+
+                            <div class="sidebar-section">
+                                <h3>LOCATIONS</h3>
+                                <div class="city-grid">
+                                    <button class="city-btn" data-lat="38.9072" data-lon="-77.0369"
+                                        data-alt="50000">WASH
+                                        DC</button>
+                                    <button class="city-btn" data-lat="40.7128" data-lon="-74.0060" data-alt="50000">NEW
+                                        YORK</button>
+                                    <button class="city-btn" data-lat="51.5074" data-lon="-0.1278"
+                                        data-alt="50000">LONDON</button>
+                                    <button class="city-btn" data-lat="35.6762" data-lon="139.6503"
+                                        data-alt="50000">TOKYO</button>
+                                    <button class="city-btn" data-lat="31.776" data-lon="35.235"
+                                        data-alt="200000">PALESTINE</button>
+                                    <button class="city-btn" data-lat="37.7749" data-lon="-122.4194"
+                                        data-alt="50000">SF</button>
+                                    <button class="city-btn" data-lat="-33.8688" data-lon="151.2093"
+                                        data-alt="50000">SYDNEY</button>
+                                    <button class="city-btn" data-lat="48.8566" data-lon="2.3522"
+                                        data-alt="50000">PARIS</button>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-section">
+                                <h3>VISUAL MODES</h3>
+                                <div class="mode-grid">
+                                    <button class="mode-btn active" data-mode="normal">NORMAL</button>
+                                    <button class="mode-btn" data-mode="crt">CRT</button>
+                                    <button class="mode-btn" data-mode="nvg">NVG</button>
+                                    <button class="mode-btn" data-mode="flir">FLIR</button>
+                                    <button class="mode-btn" data-mode="noir">NOIR</button>
+                                    <button class="mode-btn" data-mode="anime">ANIME</button>
+                                    <button class="mode-btn" data-mode="snow">SNOW</button>
+                                    <button class="mode-btn" data-mode="ai">AI</button>
+                                </div>
+                            </div>
+                        </div>
+                </aside>
+
+                <!-- Center Crosshair Layer (Flex-grow region) -->
+                <div id="crosshair-zone">
+                    <div id="crosshair">
+                        <div class="crosshair-vline"></div>
+                        <div class="crosshair-hline"></div>
+                        <div class="crosshair-center"></div>
+                    </div>
+
+                    <!-- Weather Controls Overlay (Bottom center) -->
+                    <div id="weather-controls" class="hidden">
+                        <div class="weather-picker hud-panel">
+                            <button class="layer-picker-btn active" data-wx="rain">RAIN</button>
+                            <button class="layer-picker-btn" data-wx="wind">WIND</button>
+                            <button class="layer-picker-btn" data-wx="temp">TEMP</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side Info Panels -->
+                <div id="right-panels">
+                    <div id="info-panel" class="hud-panel">
+                        <div class="recording-indicator">
+                            <span class="dot blink"></span> REC
+                        </div>
+                        <div class="info-row">
+                            <span class="label">ORB:</span> <span class="value text-cyan">47639</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">PASS:</span> <span class="value text-cyan">DESC-179</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="info-row inline-row">
+                            <span class="label">GSD:</span> <span id="hud-gsd" class="value text-cyan">0.00M</span>
+                            <span class="label">NIIRS:</span> <span id="hud-niirs" class="value text-cyan">0.0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">ALT:</span> <span id="hud-alt-m" class="value text-cyan">0M</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Details popup can appear here -->
+                    <div id="target-details" class="hud-panel hidden">
+                        <h3>TARGET DETAILS</h3>
+                        <div id="target-content"></div>
+                        <button id="close-target-btn">CLOSE [X]</button>
+                    </div>
+
+                    <!-- AI Insights Panel -->
+                    <div id="ai-insights-panel" class="hud-panel open-argus-ai" style="cursor: pointer;" title="Click to open interactive ARGUS AI Chat">
+                        <div class="ai-header">
+                            <span class="dot blink cyan"></span>
+                            <h3>GEO-AI UPLINK</h3>
+                            <span style="font-size: 13.5px; color: var(--cyber-cyan); margin-left: auto; opacity: 0.85;"><i class="fas fa-external-link-alt"></i> CHAT</span>
+                        </div>
+                        <div class="insight-content terminal-text" id="ai-insights-text">
+                            INITIALIZING THREAT ANALYSIS...<br>
+                            ANALYZING GLOBAL ACTIVITY...<br>
+                            > ANOMALY DETECTED IN EASTERN EUROPE<br>
+                            > NAVAL MOVEMENT: SOUTH CHINA SEA<br>
+                            > AWAITING FURTHER TELEMETRY...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Left Coordinates -->
+            <div id="coordinates-panel" class="hud-panel">
+                <div id="hud-mgrs" class="text-cyan text-bold">MGRS: 00A 00000 00000</div>
+                <div id="hud-deg" class="text-muted">0.0000°N 0.0000°E</div>
+            </div>
+
+            <!-- Live News Feed Panel -->
+            <div id="news-feed-panel" class="hud-panel hidden">
+                <div class="news-header">
+                    <h3 class="text-red blink">LIVE OP-INTEL FEED</h3>
+                    <div class="news-controls">
+                        <button class="news-btn active" data-channel="aljazeera">AJE</button>
+                        <button class="news-btn" data-channel="sky">SKY</button>
+                        <button class="news-btn" data-channel="dw">DW</button>
+                        <button class="news-btn" data-channel="nasa">NASA</button>
+                    </div>
+                    <button id="close-news-btn">[X]</button>
+                </div>
+                <div class="news-video-container">
+                    <iframe id="news-iframe" src="" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div id="system-status" class="text-cyan">
+                <span id="status-text">SYSTEM READY</span>
+            </div>
+
+            <!-- World Clock Widget -->
+            <div id="world-clock" class="hud-panel">
+                <div class="clock-row"><span class="clock-label">DC</span><span class="clock-time"
+                        id="clock-dc">--:--</span></div>
+                <div class="clock-row"><span class="clock-label">LON</span><span class="clock-time"
+                        id="clock-lon">--:--</span></div>
+                <div class="clock-row"><span class="clock-label">MSK</span><span class="clock-time"
+                        id="clock-msk">--:--</span></div>
+                <div class="clock-row"><span class="clock-label">BEJ</span><span class="clock-time"
+                        id="clock-bej">--:--</span></div>
+                <div class="clock-row"><span class="clock-label">TKY</span><span class="clock-time"
+                        id="clock-tky">--:--</span></div>
+            </div>
+
+            <!-- RSS Intel Feed Panel -->
+            <div id="intel-feed-panel" class="hud-panel hidden">
+                <div class="intel-feed-header">
+                    <h3><span class="dot blink cyan"></span> SIGINT RSS FEED</h3>
+                    <button id="close-intel-feed">[X]</button>
+                </div>
+                <div id="intel-feed-list" class="intel-feed-scroll">
+                    <div class="terminal-text">FETCHING INTEL FEEDS...</div>
+                </div>
+            </div>
+
+            <!-- CCTV Popup (Centered overlay) -->
+            <div id="cctv-popup" class="hud-panel hidden">
+                <div class="cctv-header">
+                    <div class="cctv-indicator"><span class="dot blink red"></span> LIVE FEED</div>
+                    <button class="cctv-close">[X]</button>
+                </div>
+                <div class="cctv-feed-container">
+                    <div class="cctv-static">NO SIGNAL</div>
+                </div>
+                <div class="cctv-info">
+                    <div id="cctv-id">CAM-ID</div>
+                    <div id="cctv-name">CAM-NAME</div>
+                </div>
+            </div>
+
+            <!-- ARGUS Cyber-Physical Threat Command Center Panel -->
+            <div id="argus-command-panel" class="hud-panel hidden" style="position: fixed; top: 50px; right: 20px; width: 620px; max-height: 88vh; overflow-y: auto; z-index: 1000; background: rgba(2, 14, 22, 0.95); border: 1px solid var(--cyber-cyan); box-shadow: 0 0 25px rgba(0, 255, 209, 0.25); border-radius: 6px; padding: 15px; font-family: var(--cyber-font-mono);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--cyber-border); padding-bottom: 8px; margin-bottom: 12px;">
+                    <div>
+                        <span class="dot blink cyan" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--cyber-cyan); margin-right: 6px;"></span>
+                        <span style="font-family: var(--cyber-font-orbitron); font-weight: bold; color: var(--cyber-cyan); font-size: 14px; letter-spacing: 1px;">ARGUS EYE // CYBER-PHYSICAL COMMAND</span>
+                    </div>
+                    <button id="close-argus-panel" style="background: none; border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; padding: 2px 8px; border-radius: 3px;">[X]</button>
+                </div>
+
+                <!-- Scenario Demo Controller -->
+                <div style="background: rgba(0, 255, 209, 0.05); border: 1px solid var(--cyber-border); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 13.5px; color: var(--cyber-amber); font-weight: bold;">EXPO DEMO ORCHESTRATION</span>
+                        <span id="argus-stage-badge" style="background: var(--cyber-cyan); color: #000; font-size: 13px; font-weight: bold; padding: 2px 6px; border-radius: 3px;">STAGE 1: HEALTHY</span>
+                    </div>
+                    <div id="argus-stage-desc" style="font-size: 13.5px; color: #a0c0d0; margin-bottom: 10px; min-height: 28px;">
+                        All 3 ARGUS nodes generating authenticated Ed25519 signed telemetry. Baseline trust = 100%.
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <button class="cyber-btn" id="btn-argus-step" style="background: rgba(0,255,209,0.2); border: 1px solid var(--cyber-cyan); color: var(--cyber-cyan); padding: 5px 10px; font-size: 13.5px; cursor: pointer; border-radius: 3px; font-weight: bold;">▶ NEXT STAGE</button>
+                        <button class="cyber-btn" id="btn-argus-reset" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 5px 10px; font-size: 13.5px; cursor: pointer; border-radius: 3px;">↺ RESET SCENARIO</button>
+                        <button class="cyber-btn" id="btn-argus-flyto" style="background: rgba(0,255,209,0.1); border: 1px solid var(--cyber-border); color: #a0f0e0; padding: 5px 10px; font-size: 13.5px; cursor: pointer; border-radius: 3px;">🎯 FOCUS MESH (SF BAY)</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px;">
+                        <button class="stage-btn active" data-stage="1" style="padding: 3px; font-size: 13px; background: rgba(0,255,209,0.3); border: 1px solid var(--cyber-cyan); color: #fff; cursor: pointer;">S1</button>
+                        <button class="stage-btn" data-stage="2" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S2</button>
+                        <button class="stage-btn" data-stage="3" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S3</button>
+                        <button class="stage-btn" data-stage="4" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S4</button>
+                        <button class="stage-btn" data-stage="5" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S5</button>
+                        <button class="stage-btn" data-stage="6" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S6</button>
+                        <button class="stage-btn" data-stage="7" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S7</button>
+                        <button class="stage-btn" data-stage="8" style="padding: 3px; font-size: 13px; background: rgba(0,0,0,0.5); border: 1px solid var(--cyber-border); color: #888; cursor: pointer;">S8</button>
+                    </div>
+                </div>
+
+                <!-- Node Status Board -->
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 13.5px; color: var(--cyber-cyan); font-weight: bold; margin-bottom: 6px; letter-spacing: 0.5px;">ARGUS SENSOR NODE TELEMETRY & TRUST</div>
+                    <div id="argus-nodes-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                        <!-- Node cards populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Active Incident & Response Drawer -->
+                <div id="argus-incident-box" style="background: rgba(255, 0, 85, 0.08); border: 1px solid rgba(255, 0, 85, 0.3); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 13.5px; color: var(--cyber-red); font-weight: bold;">🚨 ACTIVE CYBER-PHYSICAL INCIDENT</span>
+                        <span id="argus-inc-status" style="font-size: 13px; background: var(--cyber-red); color: #fff; padding: 1px 6px; border-radius: 2px;">NONE ACTIVE</span>
+                    </div>
+                    <div id="argus-inc-title" style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px;">Normal Operations - No Anomalies Triggered</div>
+                    <div id="argus-inc-evidence" style="font-size: 13.5px; color: #ff99aa; margin-bottom: 8px;">Deterministic integrity checks verified across all mesh nodes.</div>
+                    <div id="argus-inc-actions" style="display: flex; gap: 8px;">
+                        <button id="btn-argus-quarantine" style="background: rgba(188, 19, 254, 0.25); border: 1px solid var(--cyber-purple); color: #ff88ff; padding: 4px 10px; font-size: 13px; cursor: pointer; border-radius: 3px; font-weight: bold;">⛔ QUARANTINE FLAGGED NODE</button>
+                        <button id="btn-argus-restore" style="background: rgba(0, 255, 209, 0.2); border: 1px solid var(--cyber-cyan); color: var(--cyber-cyan); padding: 4px 10px; font-size: 13px; cursor: pointer; border-radius: 3px; font-weight: bold;">✓ RESTORE & ROTATE KEY</button>
+                    </div>
+                </div>
+
+                <!-- PANOPTIC Grounded AI Analyst Panel -->
+                <div style="background: rgba(0, 20, 30, 0.85); border: 1px solid var(--cyber-border); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 13.5px; color: var(--cyber-cyan); font-weight: bold;">PANOPTIC INTELLIGENCE ANALYST</span>
+                        <span id="argus-ai-confidence" style="font-size: 13px; color: var(--cyber-cyan);">CONFIDENCE: 98%</span>
+                    </div>
+                    <div id="argus-ai-content" style="font-size: 13.5px; line-height: 1.4; color: #c0e0e8;">
+                        <div style="color: #60a0b0; font-style: italic;">Awaiting anomaly correlation to generate explainable incident assessment...</div>
+                    </div>
+                </div>
+
+                <!-- Deterministic Mathematical Anomaly Stream -->
+                <div style="background: #010609; border: 1px solid rgba(0, 255, 209, 0.15); border-radius: 4px; padding: 8px;">
+                    <div style="font-size: 13px; color: #608090; font-weight: bold; margin-bottom: 4px;">DETERMINISTIC VERIFICATION & TELEMETRY STREAM</div>
+                    <div id="argus-telemetry-log" style="font-size: 13px; color: #00ffaa; max-height: 90px; overflow-y: auto; font-family: monospace;">
+                        <div>[SYSTEM INIT] ARGUS Core Mesh online. Ed25519 Keystore initialized (3 Nodes).</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
+            navigator.serviceWorker.register('/static/sw-globe-cache.js', { scope: '/' })
+                .then(function(reg) { console.log('[Globe Cache SW] Active, scope:', reg.scope); })
+                .catch(function(err) { console.warn('[Globe Cache SW]:', err.message); });
+        }
+    </script>
+    <script type="module" src="/static/js/globe-main.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuItems = document.querySelectorAll('.menu-item[data-href]');
+            menuItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const href = item.getAttribute('data-href');
+                    if (href) {
+                        window.location.href = href;
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Markdown & LaTeX Vendor Libraries -->
+    <script src="/static/vendor/marked.min.js"></script>
+    <script src="/static/vendor/katex.min.js"></script>
+    <script src="/static/vendor/auto-render.min.js"></script>
+
+    <!-- Universal Tactical ARGUS AI Core Script -->
+    <script src="/static/js/argus-ai.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoVigilant — RF Surveillance</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📶</text></svg>" />
+    <!-- Leaflet CSS from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Highlight.js for code rendering -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- Design system CSS -->
+    <link rel="stylesheet" href="/static/css/cyberpunk.css">
+    <link rel="stylesheet" href="/static/css/surveillance.css">
+    <link rel="stylesheet" href="/static/css/argus-ai.css">
+    <link rel="stylesheet" href="/static/vendor/katex.min.css">
+    <link rel="stylesheet" href="/static/css/argus-kiosk.css">
+    <script src="/static/js/argus-kiosk.js"></script>
+    <style>
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: rgba(4, 16, 16, 0.96) !important;
+            border: 1px solid rgba(0, 255, 209, 0.45) !important;
+            box-shadow: 0 0 25px rgba(0, 255, 209, 0.28) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 4px !important;
+        }
+        .leaflet-popup-content {
+            margin: 12px 14px !important;
+            line-height: 1.4;
+        }
+        .argus-tactical-popup {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--cyber-cyan, #00ffd1);
+            min-width: 290px;
+            max-width: 380px;
+        }
+        .pop-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 3px 0;
+        }
+        .pop-lbl {
+            color: rgba(0, 255, 209, 0.75);
+            font-size: 12.5px;
+            letter-spacing: 0.8px;
+            font-weight: bold;
+        }
+        .pop-val {
+            color: #ffffff;
+            font-size: 14.5px;
+            font-weight: 600;
+            text-align: right;
+            word-break: break-word;
+        }
+        .popup-redirect-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            background: rgba(0, 255, 209, 0.18);
+            border: 1px solid var(--cyber-cyan, #00ffd1);
+            color: var(--cyber-cyan, #00ffd1);
+            padding: 8px 14px;
+            font-size: 12.5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .popup-redirect-btn:hover {
+            background: var(--cyber-cyan, #00ffd1) !important;
+            color: #020a0a !important;
+            box-shadow: 0 0 12px var(--cyber-cyan, #00ffd1);
+        }
+        .popup-intel-btn {
+            background: rgba(0, 255, 209, 0.12);
+            border: 1px solid rgba(0, 255, 209, 0.4);
+            color: var(--cyber-cyan, #00ffd1);
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .popup-intel-btn:hover {
+            background: rgba(0, 255, 209, 0.3) !important;
+            border-color: var(--cyber-cyan, #00ffd1);
+            box-shadow: 0 0 8px rgba(0, 255, 209, 0.4);
+        }
+        .popup-ai-btn {
+            background: rgba(0, 163, 255, 0.15);
+            border: 1px solid rgba(0, 163, 255, 0.45);
+            color: #00e5ff;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .popup-ai-btn:hover {
+            background: rgba(0, 163, 255, 0.35) !important;
+            box-shadow: 0 0 8px rgba(0, 163, 255, 0.5);
+        }
+
+        /* ═══ OSINT MODAL STYLES ═══ */
+        #osint-modal.hidden {
+            display: none !important;
+        }
+        .osint-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .osint-modal-card {
+            background: rgba(4, 16, 24, 0.96);
+            border: 1px solid rgba(0, 255, 209, 0.45);
+            box-shadow: 0 0 35px rgba(0, 255, 209, 0.25), inset 0 0 15px rgba(0, 255, 209, 0.05);
+            border-radius: 6px;
+            width: 660px;
+            max-width: 95vw;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Share Tech Mono', monospace;
+            color: #e2e8f0;
+        }
+        .osint-section {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            padding: 14px 16px;
+        }
+        .osint-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.65);
+            color: #ffffff;
+            padding: 10px 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13.5px;
+            border-radius: 3px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .osint-btn {
+            padding: 10px 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .osint-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 10px currentColor;
+        }
+        .osint-result-box {
+            display: none;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(2, 8, 14, 0.95);
+            border-radius: 3px;
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            word-break: break-all;
+        }
+        /* System 07 Dark Web & Deep OSINT Master Suite Styles */
+        .s07-tab-btn {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            padding: 12px 16px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .s07-tab-btn:hover {
+            color: #e9d5ff;
+            background: rgba(192, 132, 252, 0.08);
+        }
+        .s07-tab-btn.active {
+            color: #c084fc;
+            border-bottom: 2px solid #c084fc;
+            background: rgba(192, 132, 252, 0.15);
+            text-shadow: 0 0 8px rgba(192, 132, 252, 0.6);
+        }
+        .s07-tab-pane {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .s07-tab-pane.active {
+            display: flex;
+        }
+        .s07-badge {
+            font-size: 12px;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 3px 8px;
+            border-radius: 2px;
+            border: 1px solid;
+            font-weight: bold;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!-- TACTICAL CLASSIFICATION HEADER -->
+    <header class="argus-header">
+        <div class="header-left">TOP SECRET // SI-TK // NOFORN</div>
+        <div class="header-center">
+            <span class="argus-logo-dot"></span>
+            <span style="font-family: var(--cyber-font-orbitron); font-size: 13.5px; font-weight: bold;">ARGUS</span>
+            <span style="color: rgba(0,255,209,0.4); font-size: 14px;">&#9673;</span>
+            <span style="color: var(--cyber-amber); font-size: 13px; font-weight: bold; letter-spacing: 1px;">RF SURVEILLANCE</span>
+            <span style="color: rgba(0,255,209,0.5); font-size: 12px;">// WIFI/BT SCAN MATRIX</span>
+            <button class="argus-nav-btn" onclick="window.location.href='/'"><i class="fas fa-home"></i> OVERVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/earth'"><i class="fas fa-globe"></i> 3D GLOBE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/ground'"><i class="fas fa-map"></i> GROUNDVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/news'"><i class="fas fa-satellite-dish"></i> NEWS STREAM</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/newsnetworks'"><i class="fas fa-broadcast-tower"></i> NETWORKS</button>
+            <button class="argus-nav-btn open-argus-ai" id="btn-argus-core" style="color: var(--cyber-cyan); border-color: var(--cyber-cyan); font-weight: bold; background: rgba(0,255,209,0.14); cursor: pointer;" title="Open ARGUS AI Tactical Assistant"><i class="fas fa-shield-alt"></i> ARGUS CORE</button>
+            <button class="argus-nav-btn" id="btn-osint" style="color: #34d399; border-color: rgba(52,211,153,0.5); font-weight: bold; background: rgba(52,211,153,0.15); cursor: pointer;" title="OSINT Research Tools — DNS, Sanctions, POI Search"><i class="fas fa-search"></i> 🔍 OSINT</button>
+            <button class="argus-nav-btn" id="btn-darkweb" onclick="openDarkWebModal()" style="color: #c084fc; border-color: rgba(192,132,252,0.6); font-weight: bold; background: rgba(192,132,252,0.15); cursor: pointer;" title="Tor Onion &amp; Deep OSINT Dark Web Scraper"><i class="fas fa-user-secret"></i> 🧅 DARK WEB</button>
+        </div>
+        <div class="header-right">
+            <span class="argus-online-badge">&#9679; ONLINE</span>
+            <span id="argus-timestamp">REC 0000-00-00 00:00:00Z</span>
+            <span id="device-counts" style="color: var(--cyber-cyan); font-size: 13px; font-weight: bold;">Loading...</span>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE: control panel | map | results sidebar -->
+    <div id="sv-workspace">
+
+        <!-- LEFT: Control Panel -->
+        <div id="sv-control-panel">
+
+            <!-- Mode Toggle: WiFi / Bluetooth -->
+            <div class="sv-section">
+                <div class="sv-section-title">SENSOR MODE</div>
+                <div class="sv-mode-toggle">
+                    <span class="sv-mode-label active" id="label-wifi">WIFI UPLINK</span>
+                    <label class="sv-switch">
+                        <input type="checkbox" id="mode-switch" onchange="toggleMode()">
+                        <span class="sv-slider"></span>
+                    </label>
+                    <span class="sv-mode-label" id="label-bluetooth">BT SCAN</span>
+                </div>
+            </div>
+
+            <!-- Search / Intercept -->
+            <div class="sv-section">
+                <div class="sv-section-title">TARGET INTERCEPT</div>
+                <div class="sv-search-row">
+                    <select id="search-type">
+                        <option value="location">Location</option>
+                        <option value="bssid">BSSID</option>
+                        <option value="ssid">Wi-Fi SSID</option>
+                        <option value="network">Network/IP</option>
+                        <option value="darkweb">Dark Web / .Onion</option>
+                    </select>
+                    <input type="text" id="search-input" placeholder="Enter query...">
+                </div>
+                <button class="sv-intercept-btn" onclick="performSearch()"><i class="fas fa-crosshairs"></i> INTERCEPT TARGETS</button>
+            </div>
+
+            <!-- System 07: Tor Onion Network & Deep OSINT Recon Section -->
+            <div class="sv-section" style="border-left: 2px solid #c084fc; background: rgba(192,132,252,0.04);">
+                <div class="sv-section-title" style="color: #c084fc; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="fas fa-user-secret"></i> SYSTEM 07: DEEP OSINT</span>
+                    <span style="font-size: 11.5px; color:#e9d5ff; background:rgba(192,132,252,0.25); border:1px solid rgba(192,132,252,0.5); padding:1px 5px; border-radius:2px;">TOR ONION</span>
+                </div>
+                <div style="font-size: 12px; color:#94a3b8; margin-bottom:6px;">Tor .onion engine, breach dumps, crime blotters &amp; biometric search.</div>
+                <div class="sv-search-row">
+                    <input type="text" id="dw-quick-input" placeholder="Query .onion, leak, or crime..." style="flex:1; background:rgba(0,0,0,0.65); border:1px solid rgba(192,132,252,0.4); color:#c084fc; font-family:'Share Tech Mono',monospace; font-size:11px; padding:6px 8px; border-radius:2px; outline:none;" onkeydown="if(event.key==='Enter') runDarkWebQuickSearch()">
+                    <button class="sv-intercept-btn" onclick="runDarkWebQuickSearch()" style="width:auto; padding:6px 12px; background:rgba(192,132,252,0.2); border:1px solid #c084fc; color:#c084fc; cursor:pointer;" title="Run Deep OSINT Recon"><i class="fas fa-satellite-dish"></i></button>
+                </div>
+                <!-- Quick Tool Launchers -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px; margin-top:6px;">
+                    <button onclick="openDarkWebTab('onion')" style="background:rgba(192,132,252,0.12); border:1px solid rgba(192,132,252,0.35); color:#e9d5ff; font-family:'Orbitron',sans-serif; font-size: 11.5px; padding:5px 4px; cursor:pointer; border-radius:2px; text-align:center;">
+                        🧅 .ONION
+                    </button>
+                    <button onclick="openDarkWebTab('leaks')" style="background:rgba(192,132,252,0.12); border:1px solid rgba(192,132,252,0.35); color:#e9d5ff; font-family:'Orbitron',sans-serif; font-size: 11.5px; padding:5px 4px; cursor:pointer; border-radius:2px; text-align:center;">
+                        📂 LEAKS
+                    </button>
+                    <button onclick="openDarkWebTab('crime')" style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4); color:#fbbf24; font-family:'Orbitron',sans-serif; font-size: 11.5px; padding:5px 4px; cursor:pointer; border-radius:2px; text-align:center;">
+                        ⚖️ CRIMES
+                    </button>
+                    <button onclick="openDarkWebTab('photo')" style="background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.4); color:#34d399; font-family:'Orbitron',sans-serif; font-size: 11.5px; padding:5px 4px; cursor:pointer; border-radius:2px; text-align:center;">
+                        📸 PHOTO
+                    </button>
+                </div>
+                <button onclick="openDarkWebModal()" style="margin-top:6px; width:100%; background:linear-gradient(90deg, rgba(192,132,252,0.2), rgba(0,255,209,0.1)); border:1px solid #c084fc; color:#fff; font-family:'Orbitron',sans-serif; font-size: 12px; padding:6px; cursor:pointer; letter-spacing:0.5px; border-radius:2px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+                    <i class="fas fa-terminal"></i> SYSTEM 07 MASTER CONSOLE
+                </button>
+            </div>
+
+            <!-- Hardware Filters -->
+            <div class="sv-section">
+                <div class="sv-section-title">HARDWARE FILTERS</div>
+                <div class="sv-filters-grid">
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="router"><div class="box"></div> WIFI</label>
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="bluetooth"><div class="box"></div> BLUETOOTH</label>
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="camera"><div class="box"></div> CCTV/CAM</label>
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="dashcam"><div class="box"></div> DASHCAM</label>
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="tv"><div class="box"></div> SMART_TV</label>
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="car"><div class="box"></div> VEHICLE</label>
+                    <label class="cyber-check"><input type="checkbox" checked class="filter-cb" value="headphone"><div class="box"></div> AUDIO</label>
+                </div>
+            </div>
+
+            <!-- Baselayer controls -->
+            <div class="sv-section">
+                <div class="sv-section-title">BASEMAP LAYER</div>
+                <div class="sv-baselayer-group">
+                    <button class="sv-baselayer-btn" id="bl-cyber" onclick="switchBaselayer('cyber')">CYBER</button>
+                    <button class="sv-baselayer-btn" id="bl-sat" onclick="switchBaselayer('sat')">SAT</button>
+                    <button class="sv-baselayer-btn active" id="bl-hybrid" onclick="switchBaselayer('hybrid')">HYBRID</button>
+                </div>
+            </div>
+
+            <!-- Download -->
+            <div class="sv-section">
+                <a href="#" class="search-btn" id="download-btn" style="display:none;"><i class="fas fa-file-download"></i> DOWNLOAD INTEL REPORT</a>
+            </div>
+
+        </div>
+        <!-- END: Left Control Panel -->
+
+        <!-- CENTER: Map Zone -->
+        <div id="sv-map-zone">
+            <!-- Corner brackets -->
+            <div class="argus-corner argus-corner-tl"></div>
+            <div class="argus-corner argus-corner-tr"></div>
+            <div class="argus-corner argus-corner-bl"></div>
+            <div class="argus-corner argus-corner-br"></div>
+
+            <!-- Leaflet map -->
+            <div id="map"></div>
+
+            <!-- Coordinates overlay -->
+            <div id="sv-coords">
+                <i class="fas fa-crosshairs" style="color: var(--cyber-red); font-size: 12.5px;"></i>
+                <span id="sv-coord-text">LAT: 0.0000 LON: 0.0000</span>
+            </div>
+        </div>
+        <!-- END: Map Zone -->
+
+        <!-- RIGHT: Results Sidebar -->
+        <div id="sv-results-sidebar">
+            <div id="sv-results-header">
+                <span><i class="fas fa-satellite-dish" style="margin-right:7px;"></i>SIGNAL MATRIX</span>
+                <span id="sv-result-count" style="font-size:12px; font-weight:bold; color:var(--cyber-cyan);">0 NODES</span>
+            </div>
+            <div id="results-list">
+                <div style="text-align:center; color:rgba(0,255,209,0.6); padding:50px 20px; font-size:13px; font-weight:bold; letter-spacing:1px;">
+                    <i class="fas fa-satellite-dish" style="font-size:32px; margin-bottom:14px; display:block; color:rgba(0,255,209,0.4);"></i>
+                    AWAITING SCANNER DATA...<br>
+                    <span style="font-size:12px; font-weight:normal; opacity:0.75; margin-top:4px; display:inline-block;">Click on map to scan area</span>
+                </div>
+            </div>
+        </div>
+        <!-- END: Results Sidebar -->
+
+    </div>
+    <!-- END: sv-workspace -->
+
+    <div class="toast" id="toast">No connections intercepted</div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <script>
+        // ── UTC Timestamp ticker ──────────────────────────────────────
+        function updateTimestamp() {
+            const now = new Date();
+            const ts = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
+            const el = document.getElementById('argus-timestamp');
+            if (el) el.textContent = 'REC ' + ts;
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // ── Username fetch ────────────────────────────────────────────
+        (async function () {
+            try {
+                const res = await fetch('/api/username', { cache: 'no-store' });
+                const data = await res.json();
+                const userInfo = document.getElementById('device-counts');
+                if (data && data.username) {
+                    userInfo.textContent = data.username + ' ● ONLINE';
+                } else {
+                    userInfo.textContent = 'GUEST ● ONLINE';
+                }
+            } catch (e) { console.debug('Username fetch failed', e); }
+        })();
+
+        // ── Baselayer switching (wired to Leaflet layers) ─────────────
+        let currentBaselayerName = 'hybrid';
+        let cyberLayer, satelliteLayer, hybridLayer;
+
+        function highlightBaselayerBtn(name) {
+            currentBaselayerName = name;
+            document.querySelectorAll('.sv-baselayer-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('bl-' + name);
+            if (btn) btn.classList.add('active');
+        }
+
+        function switchBaselayer(name) {
+            if (!map) return;
+            highlightBaselayerBtn(name);
+            const mapEl = document.getElementById('map');
+            if (name === 'cyber') {
+                if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+                if (hybridLayer && map.hasLayer(hybridLayer)) map.removeLayer(hybridLayer);
+                if (cyberLayer && !map.hasLayer(cyberLayer)) map.addLayer(cyberLayer);
+                if (mapEl) mapEl.classList.add('cyber-map');
+                document.body.classList.remove('sat-mode');
+            } else if (name === 'sat') {
+                if (cyberLayer && map.hasLayer(cyberLayer)) map.removeLayer(cyberLayer);
+                if (hybridLayer && map.hasLayer(hybridLayer)) map.removeLayer(hybridLayer);
+                if (satelliteLayer && !map.hasLayer(satelliteLayer)) map.addLayer(satelliteLayer);
+                if (mapEl) mapEl.classList.remove('cyber-map');
+                document.body.classList.add('sat-mode');
+            } else if (name === 'hybrid') {
+                if (cyberLayer && map.hasLayer(cyberLayer)) map.removeLayer(cyberLayer);
+                if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+                if (hybridLayer && !map.hasLayer(hybridLayer)) map.addLayer(hybridLayer);
+                if (mapEl) mapEl.classList.remove('cyber-map');
+                document.body.classList.remove('sat-mode');
+            }
+        }
+    </script>
+    <script>
+        let map;
+        let markers = L.markerClusterGroup();
+        let results = [];
+
+        function initMap() {
+            if (map) return;
+            const mapEl = document.getElementById('map');
+            if (!mapEl) return;
+
+            map = L.map('map', {
+                preferCanvas: true,
+                zoomControl: true,
+                attributionControl: true
+            }).setView([51.505, -0.09], 13);
+
+            // 1. Cyber / Tactical Dark Layer (Esri World Dark Gray Canvas - high resolution, no API key, zero watermarks)
+            const esriDarkBase = L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 20,
+                maxNativeZoom: 16,
+                attribution: '&copy; Esri, HERE, Garmin, OpenStreetMap'
+            });
+            const esriDarkRef = L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 20,
+                maxNativeZoom: 16
+            });
+            cyberLayer = L.layerGroup([esriDarkBase, esriDarkRef]);
+
+            // 2. Satellite Layer (Esri World Imagery)
+            satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: '&copy; Esri, Maxar, Earthstar Geographics'
+            });
+
+            // 3. Hybrid Layer (Google Satellite + Road Overlay)
+            hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '&copy; Google Maps'
+            });
+
+            const baseLayers = {
+                "Cyber Tactical": cyberLayer,
+                "SatView": satelliteLayer,
+                "Hybrid": hybridLayer
+            };
+
+            L.control.layers(baseLayers).addTo(map);
+
+            // Default layer: Hybrid (Google Satellite + Road Overlay)
+            hybridLayer.addTo(map);
+            mapEl.classList.remove('cyber-map');
+            document.body.classList.remove('sat-mode');
+            highlightBaselayerBtn('hybrid');
+
+            map.on('baselayerchange', (e) => {
+                if (e.name === "SatView") {
+                    mapEl.classList.remove('cyber-map');
+                    document.body.classList.add('sat-mode');
+                    highlightBaselayerBtn('sat');
+                } else if (e.name === "Hybrid") {
+                    mapEl.classList.remove('cyber-map');
+                    document.body.classList.remove('sat-mode');
+                    highlightBaselayerBtn('hybrid');
+                } else {
+                    mapEl.classList.add('cyber-map');
+                    document.body.classList.remove('sat-mode');
+                    highlightBaselayerBtn('cyber');
+                }
+            });
+
+            // Live tactical coordinates tracking
+            map.on('mousemove', (e) => {
+                const el = document.getElementById('sv-coord-text');
+                if (el && e.latlng) {
+                    el.textContent = `LAT: ${e.latlng.lat.toFixed(4)} LON: ${e.latlng.lng.toFixed(4)}`;
+                }
+            });
+
+            map.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+                await fetchNearbyDevices(lat, lng);
+            });
+
+            map.addLayer(markers);
+
+            // Force layout recalculation and tile fetching
+            // Solves the issue where flexbox container clientHeight=0 before initial paint
+            const forceResize = () => {
+                if (map) {
+                    map.invalidateSize({ pan: false });
+                }
+            };
+            requestAnimationFrame(() => {
+                forceResize();
+                setTimeout(forceResize, 50);
+                setTimeout(forceResize, 150);
+                setTimeout(forceResize, 350);
+                setTimeout(forceResize, 800);
+            });
+
+            if (window.ResizeObserver) {
+                const ro = new ResizeObserver(() => forceResize());
+                ro.observe(mapEl);
+                const zone = document.getElementById('sv-map-zone');
+                if (zone) ro.observe(zone);
+            }
+        }
+
+        // Toggle Mode logic
+        function toggleMode() {
+            const isBT = document.getElementById('mode-switch').checked;
+            document.getElementById('label-wifi').classList.toggle('active', !isBT);
+            document.getElementById('label-bluetooth').classList.toggle('active', isBT);
+            markers.clearLayers();
+            results = [];
+            showToast(`SENSORS_SWITCHED: ${isBT ? 'BLUETOOTH' : 'WIFI'}`);
+        }
+
+        // Fetch nearby devices from Flask backend
+        async function fetchNearbyDevices(lat, lon) {
+            const mode = document.getElementById('mode-switch')?.checked ? 'bluetooth' : 'wifi';
+            showToast(`INTERCEPTING ${mode.toUpperCase()} SIGNALS...`);
+            try {
+                let response = await fetch(`/nearby?lat=${lat}&lon=${lon}&mode=${mode}`);
+                if (!response.ok) {
+                    response = await fetch(`/api/nearby?lat=${lat}&lon=${lon}&mode=${mode}`);
+                }
+                const data = await response.json();
+                console.log('Nearby response:', data);
+                if (data.error) {
+                    showToast(data.error);
+                    return;
+                }
+                updateMap(data);
+            } catch (err) {
+                showToast('Error fetching devices: ' + (err.message || 'Check backend connection'));
+                console.error('Fetch error:', err);
+            }
+        }
+
+        // Perform search based on input
+        async function performSearch() {
+            const searchType = document.getElementById('search-type')?.value;
+            const searchInput = document.getElementById('search-input')?.value;
+            if (!searchInput) {
+                showToast('Please enter a search term');
+                return;
+            }
+
+            if (searchType === 'darkweb') {
+                openDarkWebModal(searchInput);
+                return;
+            }
+
+            showToast(`SEARCHING ${searchType.toUpperCase()} MATRIX...`);
+            try {
+                const mode = document.getElementById('mode-switch')?.checked ? 'bluetooth' : 'wifi';
+                let response = await fetch(`/searchzz?type=${searchType}&query=${encodeURIComponent(searchInput)}&mode=${mode}`);
+                if (!response.ok) {
+                    response = await fetch(`/api/searchzz?type=${searchType}&query=${encodeURIComponent(searchInput)}&mode=${mode}`);
+                }
+                const data = await response.json();
+                console.log('Search response:', data);
+                if (data.error) {
+                    showToast(data.error);
+                    return;
+                }
+                updateMap(data);
+            } catch (err) {
+                showToast('Error performing search: ' + (err.message || 'Check backend connection'));
+                console.error('Search error:', err);
+            }
+        }
+
+        // Update map with device markers
+        // Target URL Resolver
+        function getNodeTargetUrl(node) {
+            if (node.url) return node.url;
+            
+            let ipCandidate = node.ip || '';
+            if (!ipCandidate && node.ssid) {
+                if (node.ssid.startsWith('SEC_')) ipCandidate = node.ssid.substring(4);
+                else if (node.ssid.startsWith('CAM_')) ipCandidate = node.ssid.substring(4);
+            }
+
+            if (ipCandidate && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ipCandidate)) {
+                if (ipCandidate.startsWith('192.168.') || ipCandidate.startsWith('10.') || ipCandidate.startsWith('172.')) {
+                    return `http://${ipCandidate}`;
+                }
+                return `https://www.shodan.io/host/${ipCandidate}`;
+            }
+            
+            if (node.bssid && /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(node.bssid)) {
+                return `https://wigle.net/search#bssid=${encodeURIComponent(node.bssid)}`;
+            }
+            
+            if (node.type === 'cell_tower' && node.lat && node.lon) {
+                return `https://www.opencellid.org/#zoom=16&lat=${node.lat}&lon=${node.lon}`;
+            }
+            
+            if (node.lat && node.lon) {
+                return `/earth?lat=${node.lat}&lon=${node.lon}`;
+            }
+            
+            return `https://www.google.com/search?q=${encodeURIComponent((node.ssid || node.ip || node.bssid || 'RF Surveillance Node') + ' surveillance')}`;
+        }
+
+        // Global Modal State
+        let currentNodeData = null;
+
+        function showNodeDetails(node, shouldRedirect = false) {
+            if (!node) return;
+            currentNodeData = node;
+
+            const modal = document.getElementById('node-modal');
+            const nameEl = document.getElementById('node-modal-name');
+            const badgeEl = document.getElementById('node-modal-badge');
+            const iconEl = document.getElementById('node-modal-icon');
+            const urlEl = document.getElementById('node-modal-url');
+            const redirectBtn = document.getElementById('node-redirect-btn');
+            const launchUrlBtn = document.getElementById('node-launch-url');
+            const launchEarthBtn = document.getElementById('node-launch-earth');
+            const launchOsintBtn = document.getElementById('node-launch-osint');
+            
+            const vendorEl = document.getElementById('node-modal-vendor');
+            const bssidEl = document.getElementById('node-modal-bssid');
+            const ipEl = document.getElementById('node-modal-ip');
+            const signalEl = document.getElementById('node-modal-signal');
+            const coordsEl = document.getElementById('node-modal-coords');
+            const secEl = document.getElementById('node-modal-sec');
+            const accuracyEl = document.getElementById('node-modal-accuracy');
+            const timeEl = document.getElementById('node-modal-time');
+
+            const targetUrl = getNodeTargetUrl(node);
+            const category = (node.type || 'UNKNOWN').toUpperCase();
+
+            nameEl.textContent = node.ssid || node.cell_id || node.ip || 'SURVEILLANCE NODE';
+            badgeEl.textContent = category;
+            badgeEl.style.background = `${getCategoryColor(node.type)}33`;
+            badgeEl.style.color = getCategoryColor(node.type);
+            badgeEl.style.border = `1px solid ${getCategoryColor(node.type)}`;
+
+            const iconConfig = {
+                router: 'fas fa-wifi',
+                cell_tower: 'fas fa-broadcast-tower',
+                camera: 'fas fa-camera',
+                dashcam: 'fas fa-video',
+                car: 'fas fa-car',
+                tv: 'fas fa-tv',
+                headphone: 'fas fa-headphones',
+                iot_device: 'fas fa-microchip',
+                iot: 'fas fa-microchip',
+                bluetooth: 'fab fa-bluetooth',
+                default: 'fas fa-microchip'
+            };
+            iconEl.className = iconConfig[node.type] || iconConfig.default;
+            iconEl.style.color = getCategoryColor(node.type);
+
+            urlEl.href = targetUrl;
+            urlEl.innerHTML = `<i class="fas fa-link"></i> ${targetUrl}`;
+            redirectBtn.href = targetUrl;
+            launchUrlBtn.href = targetUrl;
+
+            if (node.lat && node.lon) {
+                launchEarthBtn.href = `/earth?lat=${node.lat}&lon=${node.lon}`;
+                launchEarthBtn.style.display = 'flex';
+            } else {
+                launchEarthBtn.style.display = 'none';
+            }
+
+            const ipCandidate = node.ip || (node.ssid && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(node.ssid) ? node.ssid : '');
+            if (ipCandidate && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ipCandidate)) {
+                launchOsintBtn.href = `https://www.shodan.io/host/${ipCandidate}`;
+                launchOsintBtn.innerHTML = `<i class="fas fa-search-location"></i> SHODAN HOST SCAN`;
+            } else if (node.bssid) {
+                launchOsintBtn.href = `https://macvendors.com/?query=${encodeURIComponent(node.bssid)}`;
+                launchOsintBtn.innerHTML = `<i class="fas fa-search-location"></i> MAC OUI LOOKUP`;
+            } else {
+                launchOsintBtn.href = `https://www.google.com/search?q=${encodeURIComponent((node.ssid || 'Node') + ' surveillance intel')}`;
+                launchOsintBtn.innerHTML = `<i class="fas fa-search-location"></i> OSINT SEARCH`;
+            }
+
+            vendorEl.textContent = node.vendor || 'Generic OEM / Unspecified';
+            bssidEl.textContent = node.bssid || (node.cell_id ? `Cell ID: ${node.cell_id}` : 'N/A');
+            ipEl.textContent = node.ip || (node.city ? `${node.city}` : 'Direct RF Carrier');
+            signalEl.textContent = node.signal ? `${node.signal} dBm` : '-55 dBm';
+            coordsEl.textContent = (node.lat && node.lon) ? `${Number(node.lat).toFixed(4)}° N, ${Number(node.lon).toFixed(4)}° E` : 'Coordinates Pending';
+            secEl.textContent = node.encryption || (node.type === 'cell_tower' ? 'Cellular Radio Interface' : 'WPA2-PSK (AES)');
+            accuracyEl.textContent = node.accuracy ? `±${node.accuracy} meters` : '±10 meters';
+            timeEl.textContent = node.timestamp ? (new Date(node.timestamp).toLocaleString()) : 'LIVE Intercept';
+
+            const zoneEl = document.getElementById('node-modal-zone');
+            const mountEl = document.getElementById('node-modal-mount');
+            const dirEl = document.getElementById('node-modal-direction');
+            if (zoneEl) zoneEl.textContent = node.zone || node.environment || (node.type === 'camera' ? 'Public Safety Zone' : 'Standard Coverage Sector');
+            if (mountEl) mountEl.textContent = node.mount || node.camera_type || (node.type === 'cell_tower' ? 'Cellular Mast Tower' : 'Standard Enclosure');
+            if (dirEl) dirEl.textContent = node.direction || 'Fixed Orientation';
+
+            modal.style.display = 'flex';
+            // NOTE: Automatic URL redirection removed per operator specification.
+            // URL redirection only triggers when operator explicitly clicks REDIRECT URL button.
+        }
+
+        function closeNodeModal() {
+            document.getElementById('node-modal').style.display = 'none';
+        }
+
+        function copyNodeUrl() {
+            if (currentNodeData) {
+                const url = getNodeTargetUrl(currentNodeData);
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('COPIED URL TO CLIPBOARD');
+                });
+            }
+        }
+
+        function copyNodeJson() {
+            if (currentNodeData) {
+                navigator.clipboard.writeText(JSON.stringify(currentNodeData, null, 2)).then(() => {
+                    showToast('COPIED INTEL JSON');
+                });
+            }
+        }
+
+        function openNodeDossierByIndex(index) {
+            if (results && results[index]) {
+                showNodeDetails(results[index], false);
+            }
+        }
+
+        function askAiAboutNodeByIndex(index) {
+            if (results && results[index]) {
+                if (window.argusAskAbout) {
+                    window.argusAskAbout({ type: 'rf_node', data: results[index] });
+                } else {
+                    showToast('AI ANALYST INITIALIZING...');
+                }
+            }
+        }
+
+        function buildDevicePopupHtml(device, index, targetUrl) {
+            const { lat, lon, ssid, bssid, cell_id, ip, vendor, signal, accuracy, timestamp, type, mount, camera_type, zone, environment, direction, osm_id, encryption } = device;
+            const catColor = getCategoryColor(type);
+            const title = ssid || cell_id || ip || (type === 'camera' ? ('CAM_' + (osm_id || bssid)) : 'SURVEILLANCE NODE');
+            const badge = (type || 'NODE').toUpperCase();
+            const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : 'LIVE INTERCEPT';
+            const coordsStr = (lat && lon) ? `${Number(lat).toFixed(5)}°N, ${Number(lon).toFixed(5)}°E` : 'Pending';
+
+            let extraRows = '';
+            if (type === 'camera' || type === 'dashcam') {
+                extraRows = `
+                    ${vendor ? `<div class="pop-row"><span class="pop-lbl">AUTHORITY:</span> <span class="pop-val">${vendor}</span></div>` : ''}
+                    ${camera_type ? `<div class="pop-row"><span class="pop-lbl">OPTICS:</span> <span class="pop-val">${camera_type}</span></div>` : ''}
+                    ${mount ? `<div class="pop-row"><span class="pop-lbl">MOUNT:</span> <span class="pop-val">${mount}</span></div>` : ''}
+                    ${zone ? `<div class="pop-row"><span class="pop-lbl">ZONE:</span> <span class="pop-val">${zone}</span></div>` : ''}
+                    ${environment ? `<div class="pop-row"><span class="pop-lbl">ENV:</span> <span class="pop-val">${environment}</span></div>` : ''}
+                    ${direction ? `<div class="pop-row"><span class="pop-lbl">HEADING:</span> <span class="pop-val">${direction}</span></div>` : ''}
+                    ${osm_id ? `<div class="pop-row"><span class="pop-lbl">OSM ID:</span> <span class="pop-val">#${osm_id}</span></div>` : ''}
+                `;
+            } else if (type === 'cell_tower') {
+                extraRows = `
+                    ${vendor ? `<div class="pop-row"><span class="pop-lbl">CARRIER:</span> <span class="pop-val">${vendor}</span></div>` : ''}
+                    ${encryption ? `<div class="pop-row"><span class="pop-lbl">RADIO:</span> <span class="pop-val">${encryption}</span></div>` : ''}
+                    ${cell_id ? `<div class="pop-row"><span class="pop-lbl">CELL ID:</span> <span class="pop-val">${cell_id}</span></div>` : ''}
+                `;
+            } else if (type === 'router' || type === 'wifi') {
+                extraRows = `
+                    ${vendor ? `<div class="pop-row"><span class="pop-lbl">VENDOR:</span> <span class="pop-val">${vendor}</span></div>` : ''}
+                    ${encryption ? `<div class="pop-row"><span class="pop-lbl">CIPHER:</span> <span class="pop-val">${encryption}</span></div>` : ''}
+                    ${device.channel ? `<div class="pop-row"><span class="pop-lbl">CHANNEL:</span> <span class="pop-val">CH ${device.channel}</span></div>` : ''}
+                `;
+            } else {
+                extraRows = `
+                    ${vendor ? `<div class="pop-row"><span class="pop-lbl">VENDOR:</span> <span class="pop-val">${vendor}</span></div>` : ''}
+                    ${encryption ? `<div class="pop-row"><span class="pop-lbl">PROTOCOL:</span> <span class="pop-val">${encryption}</span></div>` : ''}
+                `;
+            }
+
+            return `
+                <div class="argus-tactical-popup">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px;">
+                        <strong style="font-size: 14.5px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;" title="${title}">${title}</strong>
+                        <span style="font-size: 11px; font-weight: bold; padding: 3px 7px; border: 1px solid ${catColor}; color: ${catColor}; background: ${catColor}22; border-radius: 2px; white-space: nowrap;">${badge}</span>
+                    </div>
+                    <hr style="border: 0.5px solid rgba(0,255,209,0.25); margin: 5px 0;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        ${bssid ? `<div class="pop-row"><span class="pop-lbl">BSSID:</span> <span class="pop-val">${bssid}</span></div>` : ''}
+                        ${ip ? `<div class="pop-row"><span class="pop-lbl">IP ADDR:</span> <span class="pop-val">${ip}</span></div>` : ''}
+                        ${extraRows}
+                        ${signal ? `<div class="pop-row"><span class="pop-lbl">SIGNAL:</span> <span class="pop-val">${signal} dBm</span></div>` : ''}
+                        ${accuracy ? `<div class="pop-row"><span class="pop-lbl">ACCURACY:</span> <span class="pop-val">±${accuracy} m</span></div>` : ''}
+                        <div class="pop-row"><span class="pop-lbl">COORDS:</span> <span class="pop-val">${coordsStr}</span></div>
+                        <div class="pop-row" style="color: var(--accent-color, #00e5ff); font-size: 11.5px; margin-top: 3px;"><span class="pop-lbl">INTERCEPT:</span> <span class="pop-val">${formattedTime}</span></div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="popup-intel-btn" onclick="openNodeDossierByIndex(${index})" style="flex: 1;">
+                                <i class="fas fa-info-circle"></i> DOSSIER
+                            </button>
+                            <button type="button" class="popup-ai-btn" onclick="askAiAboutNodeByIndex(${index})" style="flex: 1;">
+                                <i class="fas fa-brain"></i> ASK AI
+                            </button>
+                        </div>
+                        <a href="${targetUrl}" target="_blank" class="popup-redirect-btn" style="width: 100%;">
+                            <i class="fas fa-external-link-alt"></i> REDIRECT URL
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update map with device markers
+        let markerMap = {};
+
+        function updateMap(data) {
+            markers.clearLayers();
+            markerMap = {};
+            if (data && data.devices) results = data.devices;
+            console.log('Processed results for map:', results);
+
+            // Get active filters
+            const activeFilters = Array.from(document.querySelectorAll('.filter-cb:checked')).map(cb => cb.value);
+
+            // Apply filtering
+            const filteredResults = results.filter(device => {
+                const type = device.type || 'unknown';
+                if (type === 'router' || type === 'cell_tower' || type === 'iot_device') {
+                    return activeFilters.includes(type) || activeFilters.includes('router');
+                }
+                return activeFilters.includes(type);
+            });
+
+            if (filteredResults.length === 0) {
+                showToast('No devices found');
+                document.getElementById('results-list').innerHTML = `
+                    <div style="text-align: center; color: var(--text-dim); padding: 50px 20px;">
+                        No Matches Found
+                    </div>`;
+                document.getElementById('download-btn').style.display = 'none';
+                return;
+            }
+
+            renderSidebar(filteredResults);
+
+            filteredResults.forEach((device, index) => {
+                const { lat, lon, type } = device;
+                if (lat && lon) {
+                    const icon = getDeviceIcon(type);
+                    const targetUrl = getNodeTargetUrl(device);
+                    const marker = L.marker([lat, lon], { icon })
+                        .bindPopup(buildDevicePopupHtml(device, index, targetUrl));
+                    markers.addLayer(marker);
+                    markerMap[index] = marker;
+                }
+            });
+
+            map.addLayer(markers);
+
+            const validDevices = filteredResults.filter(d => d.lat && d.lon);
+            if (validDevices.length > 0) {
+                const group = new L.featureGroup(validDevices.map(d => L.marker([d.lat, d.lon])));
+                map.fitBounds(group.getBounds().pad(0.2));
+                document.getElementById('download-btn').style.display = 'block';
+                setupDownload();
+            }
+        }
+
+        // Add listeners for real-time filtering
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.filter-cb').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    updateMap(); // Re-render with existing 'results'
+                });
+            });
+        });
+
+        function renderSidebar(nodes) {
+            const list = document.getElementById('results-list');
+            list.innerHTML = '';
+
+            // Get active filters
+            const activeFilters = Array.from(document.querySelectorAll('.filter-cb:checked')).map(cb => cb.value);
+
+            const filteredNodes = nodes.filter(node => {
+                const type = node.type || 'unknown';
+                if (type === 'router' || type === 'cell_tower' || type === 'iot_device') {
+                    return activeFilters.includes(type) || activeFilters.includes('router');
+                }
+                return activeFilters.includes(type);
+            });
+
+            filteredNodes.forEach((node) => {
+                const signal = node.signal ? Math.min(Math.abs(node.signal), 100) : 50;
+                const percent = 100 - (signal > 100 ? 100 : signal);
+                const lastSeen = node.timestamp ? formatRelativeTime(node.timestamp) : 'LIVE';
+                const targetUrl = getNodeTargetUrl(node);
+
+                const item = document.createElement('div');
+                item.className = 'node-item';
+
+                item.onclick = (e) => {
+                    if (e.target.closest('a, button')) return;
+
+                    // Focus map marker
+                    const marker = markers.getLayers().find(m => m.getLatLng().lat === node.lat && m.getLatLng().lng === node.lon);
+                    if (marker) {
+                        map.setView(marker.getLatLng(), 17);
+                        marker.openPopup();
+                    }
+
+                    // Show details modal WITHOUT automatic redirect
+                    showNodeDetails(node, false);
+                };
+
+
+                item.innerHTML = `
+                    <div class="node-header">
+                        <span class="node-name">${node.ssid || node.cell_id || node.ip || 'Unknown'}</span>
+                        <span class="node-type" style="background: ${getCategoryColor(node.type)}44; color: ${getCategoryColor(node.type)}; border: 1px solid ${getCategoryColor(node.type)};">${node.type || 'node'}</span>
+                    </div>
+                    <div class="node-meta">
+                        ${node.vendor ? `VENDOR: ${node.vendor}` : `ID: ${node.bssid || node.ip || 'ANONYMOUS'}`}<br>
+                        <span style="color: var(--accent-color); font-size: 11.5px; font-weight: 500;">LAST_SEEN: ${lastSeen}</span>
+                    </div>
+                    <div class="node-url-preview" title="${targetUrl}">
+                        <i class="fas fa-link"></i> ${targetUrl}
+                    </div>
+                    <div class="signal-meter">
+                        <div class="signal-strength" style="width: ${percent}%; background: ${getCategoryColor(node.type)}; box-shadow: 0 0 5px ${getCategoryColor(node.type)}"></div>
+                    </div>
+                    <div class="node-item-actions">
+                        <button class="node-quick-btn ai" onclick="event.stopPropagation(); window.argusAskAbout && window.argusAskAbout({ type: 'rf_node', data: (results.find(n => n.lat === ${node.lat} && n.lon === ${node.lon}) || ${JSON.stringify(node).replace(/"/g, '&quot;')}) });" style="background: rgba(0,255,209,0.2); border: 1px solid var(--cyber-cyan); color: #fff;">
+                            <i class="fas fa-brain"></i> ASK AI
+                        </button>
+                        <a href="${targetUrl}" target="_blank" class="node-quick-btn redirect" onclick="event.stopPropagation(); showToast('REDIRECTING...');">
+                            <i class="fas fa-external-link-alt"></i> REDIRECT
+                        </a>
+                        <button class="node-quick-btn intel" onclick="event.stopPropagation(); showNodeDetails(results.find(n => n.lat === ${node.lat} && n.lon === ${node.lon}) || ${JSON.stringify(node).replace(/"/g, '&quot;')});">
+                            <i class="fas fa-info-circle"></i> DOSSIER
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function formatRelativeTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return `${diff}s AGO`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m AGO`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h AGO`;
+            return date.toLocaleDateString();
+        }
+
+        function getCategoryColor(type) {
+            const colors = {
+                bluetooth: '#4A90E2',
+                car: '#FFD700',
+                camera: '#FF4444',
+                dashcam: '#FF4444',
+                tv: '#00FF88',
+                headphone: '#00FF88',
+                router: 'var(--primary-color)',
+                cell_tower: '#FF00FF'
+            };
+            return colors[type] || 'var(--primary-color)';
+        }
+
+        // Get icon based on device type
+        function getDeviceIcon(type) {
+            const icons = {
+                router: 'fas fa-wifi',
+                cell_tower: 'fas fa-broadcast-tower',
+                camera: 'fas fa-camera',
+                dashcam: 'fas fa-video',
+                car: 'fas fa-car',
+                tv: 'fas fa-tv',
+                headphone: 'fas fa-headphones',
+                iot_device: 'fas fa-microchip',
+                iot: 'fas fa-microchip',
+                bluetooth: 'fab fa-bluetooth',
+                default: 'fas fa-question-circle'
+            };
+            const iconClass = icons[type] || icons.default;
+
+            let color = 'var(--primary-color)';
+            if (type === 'bluetooth') color = '#4A90E2';
+            if (type === 'car') color = '#FFD700'; // Gold for transport
+            if (type === 'camera' || type === 'dashcam') color = '#FF4444'; // Red for surveillance
+            if (type === 'tv' || type === 'headphone') color = '#00FF88'; // Green for entertainment
+
+            return L.divIcon({
+                html: `<i class="${iconClass}" style="color: ${color}; font-size: 20px; text-shadow: 0 0 10px ${color}"></i>`,
+                className: 'custom-icon',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            });
+        }
+
+        // Setup download button
+        function setupDownload() {
+            const btn = document.getElementById('download-btn');
+            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            btn.href = URL.createObjectURL(blob);
+            btn.download = 'wifi-search-results.json';
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Sidebar navigation stub — handled by router
+        function loadContent(page) {
+            console.log(`Loading ${page}`);
+        }
+
+        // Initialize map as soon as DOM is ready without waiting for heavy external assets
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMap);
+        } else {
+            initMap();
+        }
+        window.addEventListener('load', () => {
+            if (!map) initMap();
+            else map.invalidateSize();
+        });
+        window.addEventListener('resize', () => {
+            if (map) map.invalidateSize();
+        });
+    </script>
+
+
+    <!-- ==== TACTICAL NODE DETAILS & INTEL DOSSIER MODAL ==== -->
+    <div id="node-modal" class="node-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeNodeModal();">
+        <div class="node-modal-content">
+            <div class="node-modal-header">
+                <div class="node-modal-title">
+                    <i id="node-modal-icon" class="fas fa-microchip"></i>
+                    <div>
+                        <h3 id="node-modal-name">NODE TELEMETRY</h3>
+                        <span id="node-modal-badge" class="node-type">ROUTER</span>
+                    </div>
+                </div>
+                <button class="node-modal-close" onclick="closeNodeModal()" aria-label="Close">×</button>
+            </div>
+
+            <div class="node-modal-body">
+                <!-- Live Target Redirection URL Banner -->
+                <div class="node-url-box">
+                    <div class="node-url-label"><i class="fas fa-link"></i> TARGET SPECIFIC REDIRECTION URL</div>
+                    <div class="node-url-row">
+                        <a id="node-modal-url" href="#" target="_blank" class="node-url-link">
+                            <i class="fas fa-link"></i> https://target-url
+                        </a>
+                        <button class="node-copy-btn" onclick="copyNodeUrl()" title="Copy Target URL">
+                            <i class="fas fa-copy"></i> COPY
+                        </button>
+                        <a id="node-redirect-btn" href="#" target="_blank" class="node-open-btn">
+                            <i class="fas fa-external-link-alt"></i> OPEN URL
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Telemetry Metrics Grid -->
+                <div class="node-telemetry-grid">
+                    <div class="telemetry-item">
+                        <span class="tel-label">VENDOR / MANUFACTURER</span>
+                        <span class="tel-value" id="node-modal-vendor">Cisco Systems</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">BSSID / MAC ADDRESS</span>
+                        <span class="tel-value" id="node-modal-bssid">00:1A:2B:3C:4D:5E</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">IP / NETWORK HOST</span>
+                        <span class="tel-value" id="node-modal-ip">8.8.8.8</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">SIGNAL STRENGTH</span>
+                        <span class="tel-value" id="node-modal-signal">-55 dBm</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">COORDINATES</span>
+                        <span class="tel-value" id="node-modal-coords">38.9072° N, -77.0369° W</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">SECURITY PROTOCOL</span>
+                        <span class="tel-value" id="node-modal-sec">WPA2-PSK (AES)</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">ESTIMATED ACCURACY</span>
+                        <span class="tel-value" id="node-modal-accuracy">±15 meters</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">MOUNT / ENCLOSURE</span>
+                        <span class="tel-value" id="node-modal-mount">Standard Housing</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">ZONE / ENVIRONMENT</span>
+                        <span class="tel-value" id="node-modal-zone">Public Safety Area</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">ORIENTATION / HEADING</span>
+                        <span class="tel-value" id="node-modal-direction">Fixed Orientation</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">LAST INTERCEPTED</span>
+                        <span class="tel-value" id="node-modal-time">LIVE / Active</span>
+                    </div>
+                </div>
+
+
+                <!-- Tactical Actions Deck -->
+                <div class="node-action-deck">
+                    <button class="cyber-action-btn" onclick="window.argusAskAbout && window.argusAskAbout({ type: 'rf_node', data: currentNodeData })" style="background:rgba(0,255,209,0.2); border-color:var(--cyber-cyan); color:#fff; font-weight:bold;">
+                        <i class="fas fa-brain"></i> ⚡ ASK ARGUS AI
+                    </button>
+                    <a id="node-launch-url" href="#" target="_blank" class="cyber-action-btn primary">
+                        <i class="fas fa-external-link-alt"></i> REDIRECT TO SPECIFIC URL
+                    </a>
+                    <a id="node-launch-earth" href="#" target="_blank" class="cyber-action-btn">
+                        <i class="fas fa-globe"></i> 3D EARTH HUD
+                    </a>
+                    <a id="node-launch-osint" href="#" target="_blank" class="cyber-action-btn">
+                        <i class="fas fa-search-location"></i> OSINT LOOKUP
+                    </a>
+                    <button class="cyber-action-btn" onclick="openOsintModalWithNode()" style="border-color: #34d399; color: #34d399; background: rgba(52,211,153,0.12); font-weight: bold;">
+                        <i class="fas fa-search"></i> 🔍 OSINT SUITE
+                    </button>
+                    <button class="cyber-action-btn" onclick="openDarkWebWithNode()" style="border-color: #c084fc; color: #c084fc; background: rgba(192,132,252,0.15); font-weight: bold;">
+                        <i class="fas fa-user-secret"></i> 🧅 DARK WEB SCAN
+                    </button>
+                    <button class="cyber-action-btn" onclick="openCrimeWithNode()" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.15); font-weight: bold;">
+                        <i class="fas fa-gavel"></i> ⚖️ CRIME BLOTTER
+                    </button>
+                    <button class="cyber-action-btn" onclick="copyNodeJson()">
+                        <i class="fas fa-file-code"></i> COPY INTEL JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ OSINT RESEARCH TOOLS MODAL ═══ -->
+    <div id="osint-modal" class="osint-modal-backdrop hidden" onclick="if(event.target === this) closeOsintModal();">
+        <div class="osint-modal-card">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid rgba(0, 255, 209, 0.25); background: rgba(0, 255, 209, 0.06);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 16px;">🔍</span>
+                    <span style="font-family: 'Orbitron', monospace; font-weight: 700; font-size: 15px; letter-spacing: 1.5px; color: #00ffd1;">OSINT RESEARCH TOOLS</span>
+                </div>
+                <button id="close-osint-btn" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; transition: color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">✕</button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div style="padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- Section 1: DNS Lookup -->
+                <div class="osint-section" style="border: 1px solid rgba(0, 255, 209, 0.25);">
+                    <div style="font-size: 13px; font-weight: bold; letter-spacing: 1px; color: #00ffd1; margin-bottom: 8px;">DNS LOOKUP (A, MX, NS, TXT)</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="osint-dns-input" class="osint-input" placeholder="example.com" style="border: 1px solid rgba(0,255,209,0.35);">
+                        <button id="osint-dns-btn" class="osint-btn" style="background: rgba(0,255,209,0.15); border: 1px solid #00ffd1; color: #00ffd1;">QUERY</button>
+                    </div>
+                    <div id="osint-dns-result" class="osint-result-box" style="border: 1px solid rgba(0,255,209,0.25); color: #34d399; font-family: 'Share Tech Mono', monospace; white-space: pre-wrap;"></div>
+                </div>
+
+                <!-- Section 2: OFAC Sanctions Search -->
+                <div class="osint-section" style="border: 1px solid rgba(255, 170, 0, 0.25);">
+                    <div style="font-size: 13px; font-weight: bold; letter-spacing: 1px; color: #ffaa00; margin-bottom: 8px;">OFAC SANCTIONS SEARCH (US Treasury SDN List)</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="osint-sanctions-input" class="osint-input" placeholder="Person or entity name" style="border: 1px solid rgba(255,170,0,0.35);">
+                        <button id="osint-sanctions-btn" class="osint-btn" style="background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; color: #ffaa00;">SEARCH</button>
+                    </div>
+                    <div id="osint-sanctions-result" class="osint-result-box" style="border: 1px solid rgba(255,170,0,0.25); color: #e2e8f0;"></div>
+                </div>
+
+                <!-- Section 3: Overpass POI Scan -->
+                <div class="osint-section" style="border: 1px solid rgba(167, 139, 250, 0.25);">
+                    <div style="font-size: 13px; font-weight: bold; letter-spacing: 1px; color: #a78bfa; margin-bottom: 8px;">OVERPASS POI SCAN (OpenStreetMap — uses current map center)</div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="osint-overpass-radius" style="background: rgba(0,0,0,0.65); border: 1px solid rgba(167,139,250,0.4); color: #a78bfa; padding: 8px 12px; font-family: 'Share Tech Mono', monospace; font-size: 13.5px; border-radius: 3px; outline: none; cursor: pointer;">
+                            <option value="500">500m</option>
+                            <option value="1000">1000m</option>
+                            <option value="2000">2000m</option>
+                            <option value="5000">5000m</option>
+                        </select>
+                        <button id="osint-overpass-btn" class="osint-btn" style="flex: 1; background: rgba(167,139,250,0.15); border: 1px solid #a78bfa; color: #a78bfa;">SCAN AREA</button>
+                    </div>
+                    <div id="osint-overpass-result" class="osint-result-box" style="border: 1px solid rgba(167,139,250,0.25); color: #e2e8f0;"></div>
+                </div>
+
+                <!-- Section 4: Dark Web & Tor Onion Recon -->
+                <div class="osint-section" style="border: 1px solid rgba(192, 132, 252, 0.35);">
+                    <div style="font-size: 13px; font-weight: bold; letter-spacing: 1px; color: #c084fc; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                        <span>TOR ONION &amp; LEAK RECONNAISSANCE</span>
+                        <span style="font-size: 11px; padding: 2px 7px; color: #e9d5ff; background: rgba(192,132,252,0.25); border: 1px solid rgba(192,132,252,0.5); padding: 1px 4px; border-radius: 2px;">SOCKS5 9050</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="osint-darkweb-input" class="osint-input" placeholder="Query .onion, leak databases, or alias..." style="border: 1px solid rgba(192,132,252,0.4); color: #c084fc;">
+                        <button id="osint-darkweb-btn" class="osint-btn" style="background: rgba(192,132,252,0.2); border: 1px solid #c084fc; color: #c084fc;">SCRAPE</button>
+                    </div>
+                    <div id="osint-darkweb-result" class="osint-result-box" style="border: 1px solid rgba(192,132,252,0.3); color: #e9d5ff;"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ SYSTEM 07: DARK WEB, ONION & DEEP OSINT MASTER CONSOLE ═══ -->
+    <div id="darkweb-modal" class="osint-modal-backdrop hidden" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:99999; align-items:center; justify-content:center; padding:20px;" onclick="if(event.target === this) closeDarkWebModal();">
+        <div class="osint-modal-card" style="width:840px; max-width:96vw; max-height:92vh; border:1px solid #c084fc; box-shadow:0 0 45px rgba(192,132,252,0.38), inset 0 0 15px rgba(192,132,252,0.08); display:flex; flex-direction:column; overflow:hidden;">
+            
+            <!-- Modal Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid rgba(192,132,252,0.3); background:rgba(25,10,35,0.95); flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span style="font-size:17px;">🧅</span>
+                    <span style="font-family:'Orbitron',monospace; font-weight:700; font-size:15px; letter-spacing:1.5px; color:#c084fc;">SYSTEM 07 // TOR ONION &amp; DEEP OSINT CONSOLE</span>
+                    <span style="font-size:12px; font-weight:bold; background:rgba(192,132,252,0.2); color:#e9d5ff; border:1px solid #c084fc; padding:3px 8px; border-radius:2px;">SOCKS5: 127.0.0.1:9050</span>
+                    <span id="s07-status-indicator" style="font-size:12px; font-weight:bold; background:rgba(52,211,153,0.15); color:#34d399; border:1px solid #34d399; padding:3px 8px; border-radius:2px;">● PROXY READY</span>
+                </div>
+                <button onclick="closeDarkWebModal()" style="background:none; border:none; color:#ff4444; font-size:18px; font-weight:bold; cursor:pointer; padding:2px 6px; line-height:1; transition:color 0.15s;" title="Close Modal">✕</button>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="s07-tabs" style="display:flex; gap:4px; border-bottom:1px solid rgba(192,132,252,0.25); padding:0 14px; background:rgba(18,7,26,0.95); overflow-x:auto; flex-shrink:0;">
+                <button class="s07-tab-btn active" onclick="switchS07Tab('onion')" id="s07-btn-onion">
+                    <i class="fas fa-satellite-dish"></i> 🧅 .ONION SCANNER
+                </button>
+                <button class="s07-tab-btn" onclick="switchS07Tab('leaks')" id="s07-btn-leaks">
+                    <i class="fas fa-file-code"></i> 📂 LEAK &amp; DUMP RADAR
+                </button>
+                <button class="s07-tab-btn" onclick="switchS07Tab('crime')" id="s07-btn-crime">
+                    <i class="fas fa-gavel"></i> ⚖️ CRIMINAL RECORDS
+                </button>
+                <button class="s07-tab-btn" onclick="switchS07Tab('photo')" id="s07-btn-photo">
+                    <i class="fas fa-camera"></i> 📸 SUSPECT PHOTO MATCH
+                </button>
+                <button class="s07-tab-btn" onclick="switchS07Tab('tor')" id="s07-btn-tor">
+                    <i class="fas fa-shield-alt"></i> 🛡️ TOR SOCKS5 STATUS
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div style="padding:16px 18px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; background:rgba(4,10,18,0.96);">
+                
+                <!-- ═══ TAB 1: TOR .ONION SCANNER ═══ -->
+                <div id="s07-pane-onion" class="s07-tab-pane active">
+                    <div style="font-size:13px; color:#b0c8d8; line-height:1.6;">
+                        Distributed Tor crawler querying 16 <strong style="color:#c084fc;">.onion</strong> search engines (Ahmia, OnionLand, Torch, Amnesia, DeepSearch) via SOCKS5 proxying (`socks5h://127.0.0.1:9050`) or Ahmia fallback bridge. Direct route: <code style="color:#00ffd1;">POST /api/tools/web_scan</code>.
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="dw-modal-query" placeholder="Enter .onion query, target keyword, hidden service hash, or alias..." style="flex:1; background:rgba(0,0,0,0.7); border:1px solid rgba(192,132,252,0.4); padding:10px 14px; color:#00ffd1; font-family:'Share Tech Mono',monospace; font-size:13.5px; border-radius:3px; outline:none;" onkeydown="if(event.key==='Enter') executeDarkWebScrape()" />
+                        <button onclick="executeDarkWebScrape()" class="osint-btn" style="background:#c084fc; border:1px solid #c084fc; color:#000; font-weight:bold; padding:11px 22px; font-size:12.5px; cursor:pointer; box-shadow:0 0 15px rgba(192,132,252,0.4);">
+                            <i class="fas fa-satellite-dish"></i> EXECUTE SWEEP
+                        </button>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; align-items:center;">
+                        <span style="color:#ffaa00; font-weight:bold;">SEARCH ENGINES:</span>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#d0e0ec;">
+                            <input type="checkbox" id="dw-src-darkweb" checked style="accent-color:#c084fc;" /> 16 .Onion Engines
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#d0e0ec;">
+                            <input type="checkbox" id="dw-aggressive" checked style="accent-color:#00ffd1;" /> Aggressive Deep Crawl
+                        </label>
+                        <span style="margin-left:auto; font-size:12px; color:#94a3b8;">Routing: <code style="color:#00ffd1;">socks5h://127.0.0.1:9050</code></span>
+                    </div>
+                    <div id="dw-terminal" style="background:#000; border:1px solid rgba(192,132,252,0.3); border-radius:3px; padding:10px 12px; height:130px; overflow-y:auto; font-family:monospace; font-size:12.5px; color:#a0f0ba; line-height:1.6;">
+                        <div style="color:#88a;">[SYSTEM 07 // ONION ENGINE] Ready. Proxy socks5h://127.0.0.1:9050 standing by.</div>
+                        <div style="color:#88a;">[CONFIG] Proxy: socks5h://127.0.0.1:9050 // Fallback Bridge: Ahmia Clearnet (ahmia.fi).</div>
+                    </div>
+                    <div id="dw-results-container" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;"></div>
+                </div>
+
+                <!-- ═══ TAB 2: LEAK & DUMP RADAR ═══ -->
+                <div id="s07-pane-leaks" class="s07-tab-pane">
+                    <div style="font-size:13px; color:#b0c8d8; line-height:1.6;">
+                        Exposed credential &amp; dump scanner probing Pastebin mirrors, BreachForums dumps, Telegram intel channels, and Discord compromise feeds via <code style="color:#00ffd1;">POST /api/tools/web_scan</code>.
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="s07-leaks-query" placeholder="Enter identifier, email, username, SHA hash, or target BSSID..." style="flex:1; background:rgba(0,0,0,0.7); border:1px solid rgba(192,132,252,0.4); padding:10px 14px; color:#00ffd1; font-family:'Share Tech Mono',monospace; font-size:13.5px; border-radius:3px; outline:none;" onkeydown="if(event.key==='Enter') executeLeaksScrape()" />
+                        <button onclick="executeLeaksScrape()" class="osint-btn" style="background:#c084fc; border:1px solid #c084fc; color:#000; font-weight:bold; padding:11px 22px; font-size:12.5px; cursor:pointer; box-shadow:0 0 15px rgba(192,132,252,0.4);">
+                            <i class="fas fa-file-code"></i> SCAN DUMPS
+                        </button>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; align-items:center;">
+                        <span style="color:#ffaa00; font-weight:bold;">FEED SELECTION:</span>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#d0e0ec;">
+                            <input type="checkbox" id="s07-leak-pastebin" checked style="accent-color:#c084fc;" /> Pastebin Mirrors
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#d0e0ec;">
+                            <input type="checkbox" id="s07-leak-breach" checked style="accent-color:#c084fc;" /> BreachForums Archive
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#d0e0ec;">
+                            <input type="checkbox" id="s07-leak-telegram" checked style="accent-color:#c084fc;" /> Telegram Threat Intel
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#d0e0ec;">
+                            <input type="checkbox" id="s07-leak-discord" checked style="accent-color:#c084fc;" /> Discord Threat Chans
+                        </label>
+                    </div>
+                    <div id="s07-leaks-terminal" style="background:#000; border:1px solid rgba(192,132,252,0.3); border-radius:3px; padding:10px 12px; height:130px; overflow-y:auto; font-family:monospace; font-size:12.5px; color:#a0f0ba; line-height:1.6;">
+                        <div style="color:#88a;">[SYSTEM 07 // DUMP RADAR] Ready. Pastebin, BreachForums &amp; Telegram feeds configured.</div>
+                    </div>
+                    <div id="s07-leaks-results" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;"></div>
+                </div>
+
+                <!-- ═══ TAB 3: CRIMINAL RECORDS & POLICE BLOTTERS ═══ -->
+                <div id="s07-pane-crime" class="s07-tab-pane">
+                    <div style="font-size:13px; color:#b0c8d8; line-height:1.6;">
+                        Real-time cross-jurisdiction judicial and police blotter intelligence engine. Queries FBI Wanted, INTERPOL Red Notices, UK Police API, and court databases via <code style="color:#00ffd1;">POST /api/search/crime</code> with SQLite logging.
+                    </div>
+                    <!-- Form Grid -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
+                        <div>
+                            <label style="font-size:12px; color:#fbbf24; font-weight:bold; display:block; margin-bottom:4px;">FIRST NAME *</label>
+                            <input type="text" id="s07-crime-fname" placeholder="e.g. John / Alexander" class="osint-input" style="width:100%; border:1px solid rgba(245,158,11,0.4);" />
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:#fbbf24; font-weight:bold; display:block; margin-bottom:4px;">LAST NAME *</label>
+                            <input type="text" id="s07-crime-lname" placeholder="e.g. Doe / Ivanov" class="osint-input" style="width:100%; border:1px solid rgba(245,158,11,0.4);" />
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:#fbbf24; font-weight:bold; display:block; margin-bottom:4px;">MIDDLE NAME / ALIAS</label>
+                            <input type="text" id="s07-crime-mname" placeholder="Optional" class="osint-input" style="width:100%; border:1px solid rgba(245,158,11,0.4);" />
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
+                        <div>
+                            <label style="font-size:12px; color:#94a3b8; font-weight:bold; display:block; margin-bottom:4px;">DATE OF BIRTH (DOB)</label>
+                            <input type="text" id="s07-crime-dob" placeholder="YYYY-MM-DD or YYYY" class="osint-input" style="width:100%; border:1px solid rgba(245,158,11,0.3);" />
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:#94a3b8; font-weight:bold; display:block; margin-bottom:4px;">CITY / STATE / ADDRESS</label>
+                            <input type="text" id="s07-crime-address" placeholder="e.g. New York, London, Delhi" class="osint-input" style="width:100%; border:1px solid rgba(245,158,11,0.3);" />
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:#94a3b8; font-weight:bold; display:block; margin-bottom:4px;">TARGET JURISDICTION</label>
+                            <select id="s07-crime-target" style="width:100%; background:rgba(0,0,0,0.65); border:1px solid rgba(245,158,11,0.4); color:#fbbf24; padding:9px 12px; font-family:'Share Tech Mono',monospace; font-size:13px; border-radius:3px; outline:none;">
+                                <option value="WORLDWIDE">GLOBAL (USA + UK + INTERPOL + IN)</option>
+                                <option value="USA">USA (FBI / District Courts)</option>
+                                <option value="UK">UK (Police UK / Home Office)</option>
+                                <option value="India">INDIA (CCTNS / High Court)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <label style="display:flex; align-items:center; gap:7px; font-size:13px; color:#d0e0ec; cursor:pointer;">
+                            <input type="checkbox" id="s07-crime-interpol" checked style="accent-color:#f59e0b;" /> Include INTERPOL Red Notices Live Query
+                        </label>
+                        <button onclick="executeCrimeSearch()" class="osint-btn" style="background:#f59e0b; border:1px solid #f59e0b; color:#000; font-weight:bold; padding:11px 24px; font-size:12.5px;">
+                            <i class="fas fa-balance-scale"></i> QUERY CRIMINAL ARCHIVES
+                        </button>
+                    </div>
+                    <div id="s07-crime-terminal" style="background:#000; border:1px solid rgba(245,158,11,0.3); border-radius:3px; padding:10px 12px; height:110px; overflow-y:auto; font-family:monospace; font-size:12.5px; color:#fde68a; line-height:1.6;">
+                        <div style="color:#88a;">[SYSTEM 07 // CRIMINAL ARCHIVE] Ready. Interpol API &amp; court scrapers connected.</div>
+                    </div>
+                    <div id="s07-crime-results" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;"></div>
+                </div>
+
+                <!-- ═══ TAB 4: SUSPECT PHOTO & BIOMETRIC REVERSE MATCH ═══ -->
+                <div id="s07-pane-photo" class="s07-tab-pane">
+                    <div style="font-size:13px; color:#b0c8d8; line-height:1.6;">
+                        Upload suspect mugshot or surveillance capture for real-time facial feature vectorization and visual search across Yandex CBIR, Bing Visual, Google Lens, and INTERPOL mugshot indices via <code style="color:#00ffd1;">POST /api/search/photo</code>.
+                    </div>
+                    <!-- Upload Dropzone & Controls -->
+                    <div style="display:flex; gap:14px; align-items:center;">
+                        <div id="s07-photo-dropzone" style="flex:1; border:2px dashed rgba(52,211,153,0.5); background:rgba(52,211,153,0.04); border-radius:4px; padding:16px; text-align:center; cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('s07-photo-input').click()">
+                            <input type="file" id="s07-photo-input" accept="image/*" style="display:none;" onchange="handlePhotoSelect(event)">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:22px; color:#34d399; margin-bottom:4px;"></i>
+                            <div style="font-size:13px; font-weight:bold; color:#e2e8f0;">DROP SURVEILLANCE IMAGE OR CLICK TO BROWSE</div>
+                            <div style="font-size:12px; color:#94a3b8; margin-top:4px;">PNG, JPG, WEBP &bull; Max 16MB &bull; Automatic facial feature extraction</div>
+                        </div>
+                        <div id="s07-photo-preview-box" style="width:110px; height:85px; border:1px solid rgba(52,211,153,0.3); border-radius:4px; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                            <span id="s07-photo-empty-label" style="font-size:11px; color:#64748b; text-align:center; padding:4px;">NO IMAGE LOADED</span>
+                            <img id="s07-photo-preview" style="display:none; width:100%; height:100%; object-fit:cover;" alt="Suspect Preview" />
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <span id="s07-photo-filename" style="font-size:12px; color:#34d399; font-family:'Share Tech Mono',monospace;">No file selected</span>
+                        <button onclick="executePhotoSearch()" class="osint-btn" style="background:#34d399; border:1px solid #34d399; color:#000; font-weight:bold; padding:11px 24px; font-size:12.5px;">
+                            <i class="fas fa-id-badge"></i> RUN BIOMETRIC MATCH
+                        </button>
+                    </div>
+                    <div id="s07-photo-terminal" style="background:#000; border:1px solid rgba(52,211,153,0.3); border-radius:3px; padding:10px 12px; height:110px; overflow-y:auto; font-family:monospace; font-size:12.5px; color:#a7f3d0; line-height:1.6;">
+                        <div style="color:#88a;">[SYSTEM 07 // BIOMETRIC SCANNER] Upload an image above and initiate search.</div>
+                    </div>
+                    <div id="s07-photo-results" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;"></div>
+                </div>
+
+                <!-- ═══ TAB 5: TOR DAEMON SOCKS5 TELEMETRY ═══ -->
+                <div id="s07-pane-tor" class="s07-tab-pane">
+                    <div style="font-size:13px; color:#b0c8d8; line-height:1.6;">
+                        Local Tor Win32 SOCKS5 proxy daemon monitor and routing telemetry. Controls encryption circuits, exit nodes, and hidden service bridging.
+                    </div>
+                    <!-- Status Cards Grid -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div style="background:rgba(0,0,0,0.6); border:1px solid rgba(192,132,252,0.35); border-radius:4px; padding:10px;">
+                            <div style="font-size:12px; color:#94a3b8; letter-spacing:1px; font-weight:bold;">SOCKS5 PROXY</div>
+                            <div style="font-size:16px; font-weight:bold; color:#c084fc; font-family:'Share Tech Mono',monospace; margin-top:2px;">127.0.0.1:9050</div>
+                            <div style="font-size:12px; color:#34d399; margin-top:4px; font-weight:bold;">● LISTENING (Win32)</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.6); border:1px solid rgba(192,132,252,0.35); border-radius:4px; padding:10px;">
+                            <div style="font-size:12px; color:#94a3b8; letter-spacing:1px; font-weight:bold;">CONTROL PORT</div>
+                            <div style="font-size:16px; font-weight:bold; color:#00ffd1; font-family:'Share Tech Mono',monospace; margin-top:2px;">127.0.0.1:9051</div>
+                            <div style="font-size:12px; color:#38bdf8; margin-top:4px; font-weight:bold;">PASSWORD AUTH OK</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.6); border:1px solid rgba(192,132,252,0.35); border-radius:4px; padding:10px;">
+                            <div style="font-size:12px; color:#94a3b8; letter-spacing:1px; font-weight:bold;">ACTIVE CIRCUIT</div>
+                            <div style="font-size:16px; font-weight:bold; color:#fbbf24; font-family:'Share Tech Mono',monospace; margin-top:2px;">3-HOP ENCRYPTED</div>
+                            <div style="font-size:12px; color:#e2e8f0; margin-top:4px;">Frankfurt &bull; Latency: 148ms</div>
+                        </div>
+                    </div>
+                    <!-- Win32 Daemon Info Box -->
+                    <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:10px 12px; font-size:12.5px; color:#cbd5e1; line-height:1.6;">
+                        <div style="font-weight:bold; color:#e9d5ff; margin-bottom:4px;">LOCAL TOR BUNDLE EXECUTABLE:</div>
+                        <div style="font-family:'Share Tech Mono',monospace; color:#00ffd1; background:rgba(0,0,0,0.7); padding:4px 8px; border-radius:2px; margin-bottom:6px;">
+                            tor-expert-bundle-windows-i686-15.0.19\tor\tor.exe
+                        </div>
+                        <div>To manually launch or manage the local Tor SOCKS5 daemon, run <code style="color:#fbbf24;">start.bat</code> in the repository root or execute:</div>
+                        <div style="font-family:'Share Tech Mono',monospace; color:#fde68a; background:rgba(0,0,0,0.7); padding:4px 8px; border-radius:2px; margin-top:4px;">
+                            start.bat --tor
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="pingTorDaemon()" class="osint-btn" style="flex:1; background:rgba(192,132,252,0.2); border:1px solid #c084fc; color:#c084fc; font-weight:bold;">
+                            <i class="fas fa-sync-alt"></i> TEST SOCKS5 &amp; PROXY STATUS
+                        </button>
+                        <button onclick="requestNewTorIdentity()" class="osint-btn" style="flex:1; background:rgba(0,255,209,0.15); border:1px solid #00ffd1; color:#00ffd1; font-weight:bold;">
+                            <i class="fas fa-random"></i> CYCLE TOR CIRCUIT (NEWNYM)
+                        </button>
+                    </div>
+                    <div id="s07-tor-terminal" style="background:#000; border:1px solid rgba(192,132,252,0.3); border-radius:3px; padding:10px 12px; height:120px; overflow-y:auto; font-family:monospace; font-size:12.5px; color:#a0f0ba; line-height:1.6;">
+                        <div style="color:#88a;">[TOR DAEMON] Monitoring SOCKS5 proxy port 9050. Click TEST to ping.</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Bar -->
+            <div style="border-top:1px solid rgba(192,132,252,0.2); padding:12px 18px; display:flex; justify-content:space-between; font-size:12px; color:#789; flex-wrap:wrap; gap:8px; background:rgba(18,7,26,0.95); flex-shrink:0;">
+                <span>ROUTING: <code style="color:#00ffd1;">POST /api/tools/web_scan</code> &bull; <code style="color:#00ffd1;">POST /api/search/crime</code> &bull; <code style="color:#00ffd1;">POST /api/search/photo</code></span>
+                <span>SYSTEM 07 ENGINE &bull; GEOVIGILANT ARGUS EYE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markdown & LaTeX Vendor Libraries -->
+    <script src="/static/vendor/marked.min.js"></script>
+    <script src="/static/vendor/katex.min.js"></script>
+    <script src="/static/vendor/auto-render.min.js"></script>
+
+    <!-- Universal Tactical ARGUS AI Core Script -->
+    <script src="/static/js/argus-ai.js"></script>
+
+    <!-- ═══ OSINT RESEARCH SUITE CONTROLLER ═══ -->
+    <script>
+        function openOsintModal(prefillType = null, prefillVal = null) {
+            const modal = document.getElementById('osint-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            if (prefillType === 'dns' && prefillVal) {
+                const dnsInput = document.getElementById('osint-dns-input');
+                if (dnsInput) {
+                    dnsInput.value = prefillVal;
+                    document.getElementById('osint-dns-btn')?.click();
+                }
+            } else if (prefillType === 'sanctions' && prefillVal) {
+                const sancInput = document.getElementById('osint-sanctions-input');
+                if (sancInput) {
+                    sancInput.value = prefillVal;
+                    document.getElementById('osint-sanctions-btn')?.click();
+                }
+            }
+        }
+
+        function closeOsintModal() {
+            const modal = document.getElementById('osint-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+
+        function openOsintModalWithNode() {
+            openOsintModal();
+            if (typeof currentNodeData !== 'undefined' && currentNodeData) {
+                const node = currentNodeData;
+                const ipCandidate = node.ip || (node.ssid && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(node.ssid) ? node.ssid : '');
+                if (ipCandidate) {
+                    const dnsInput = document.getElementById('osint-dns-input');
+                    if (dnsInput) {
+                        dnsInput.value = ipCandidate;
+                        document.getElementById('osint-dns-btn')?.click();
+                    }
+                } else if (node.ssid && node.ssid.includes('.')) {
+                    const dnsInput = document.getElementById('osint-dns-input');
+                    if (dnsInput) {
+                        dnsInput.value = node.ssid;
+                        document.getElementById('osint-dns-btn')?.click();
+                    }
+                } else if (node.vendor) {
+                    const sancInput = document.getElementById('osint-sanctions-input');
+                    if (sancInput) {
+                        sancInput.value = node.vendor;
+                        document.getElementById('osint-sanctions-btn')?.click();
+                    }
+                }
+            }
+        }
+
+        // ═══ SYSTEM 07: TOR ONION NETWORK & DEEP OSINT MASTER CONTROLLER ═══
+        let currentPhotoFile = null;
+
+        function switchS07Tab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.s07-tab-btn').forEach(btn => btn.classList.remove('active'));
+            const targetBtn = document.getElementById(`s07-btn-${tabName}`);
+            if (targetBtn) targetBtn.classList.add('active');
+
+            // Update tab panes
+            document.querySelectorAll('.s07-tab-pane').forEach(pane => pane.classList.remove('active'));
+            const targetPane = document.getElementById(`s07-pane-${tabName}`);
+            if (targetPane) targetPane.classList.add('active');
+
+            // Tab specific initializers
+            if (tabName === 'tor') {
+                pingTorDaemon();
+            }
+        }
+
+        function openDarkWebModal(query = '') {
+            const modal = document.getElementById('darkweb-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            switchS07Tab('onion');
+            const input = document.getElementById('dw-modal-query');
+            if (input) {
+                if (query) input.value = query;
+                setTimeout(() => input.focus(), 50);
+                if (query) executeDarkWebScrape();
+            }
+        }
+
+        function closeDarkWebModal() {
+            const modal = document.getElementById('darkweb-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+
+        function openDarkWebTab(tabName, prefill = '') {
+            const modal = document.getElementById('darkweb-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            switchS07Tab(tabName);
+
+            if (tabName === 'onion') {
+                const input = document.getElementById('dw-modal-query');
+                if (input) {
+                    if (prefill) input.value = prefill;
+                    setTimeout(() => input.focus(), 50);
+                    if (prefill) executeDarkWebScrape();
+                }
+            } else if (tabName === 'leaks') {
+                const input = document.getElementById('s07-leaks-query');
+                if (input) {
+                    if (prefill) input.value = prefill;
+                    setTimeout(() => input.focus(), 50);
+                    if (prefill) executeLeaksScrape();
+                }
+            } else if (tabName === 'crime') {
+                if (prefill) {
+                    const parts = prefill.trim().split(/\s+/);
+                    const fnameInput = document.getElementById('s07-crime-fname');
+                    const lnameInput = document.getElementById('s07-crime-lname');
+                    if (parts.length > 1) {
+                        if (fnameInput) fnameInput.value = parts[0];
+                        if (lnameInput) lnameInput.value = parts.slice(1).join(' ');
+                    } else {
+                        if (lnameInput) lnameInput.value = prefill;
+                    }
+                    executeCrimeSearch();
+                } else {
+                    const fnameInput = document.getElementById('s07-crime-fname');
+                    setTimeout(() => fnameInput?.focus(), 50);
+                }
+            } else if (tabName === 'photo') {
+                // Focus dropzone
+            } else if (tabName === 'tor') {
+                pingTorDaemon();
+            }
+        }
+
+        function openDarkWebWithNode() {
+            if (typeof currentNodeData !== 'undefined' && currentNodeData) {
+                const node = currentNodeData;
+                const query = node.ssid || node.bssid || node.ip || node.cell_id || 'RF Surveillance Node';
+                openDarkWebTab('onion', query);
+            } else {
+                openDarkWebModal();
+            }
+        }
+
+        function openCrimeWithNode() {
+            if (typeof currentNodeData !== 'undefined' && currentNodeData) {
+                const node = currentNodeData;
+                const query = node.vendor || node.ssid || 'Unknown Subject';
+                openDarkWebTab('crime', query);
+            } else {
+                openDarkWebTab('crime');
+            }
+        }
+
+        function runDarkWebQuickSearch() {
+            const input = document.getElementById('dw-quick-input');
+            const q = input ? input.value.trim() : '';
+            if (!q) {
+                showToast('Enter a target query for Deep OSINT scan');
+                return;
+            }
+            openDarkWebTab('onion', q);
+        }
+
+        // ── 1. ONION SCRAPE EXECUTION ──
+        async function executeDarkWebScrape() {
+            const input = document.getElementById('dw-modal-query');
+            const term = document.getElementById('dw-terminal');
+            const resultsBox = document.getElementById('dw-results-container');
+            if (!input || !term) return;
+
+            const q = input.value.trim();
+            if (!q) {
+                term.innerHTML += `<div style="color:var(--cyber-amber, #ffaa00);">[WARN] Target query cannot be empty. Please enter an identifier, domain, or keyword.</div>`;
+                term.scrollTop = term.scrollHeight;
+                return;
+            }
+
+            const aggressive = document.getElementById('dw-aggressive')?.checked;
+
+            term.innerHTML += `<div style="color:#00ffd1; margin-top:6px;">─── [INITIATING TOR .ONION SWEEP: "${q}"] ───</div>`;
+            term.innerHTML += `<div>[PROXY] Routing via SOCKS5 proxy socks5h://127.0.0.1:9050...</div>`;
+            term.innerHTML += `<div>[ENGINES] Querying 16 .onion indexes: Ahmia, Torch, OnionLand, Amnesia, Recon...</div>`;
+            term.innerHTML += `<div>[CRAWL] Aggressive Mode: ${aggressive ? 'TRUE (Depth: 2 hops)' : 'STANDARD'}</div>`;
+            term.scrollTop = term.scrollHeight;
+
+            if (resultsBox) resultsBox.innerHTML = '<div style="color:#88a; font-size:11px; padding:10px;"><i class="fas fa-spinner fa-spin"></i> Executing multi-engine Tor .onion crawl...</div>';
+
+            try {
+                const resp = await fetch('/api/tools/web_scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: q,
+                        type: 'all',
+                        sources: ['darkweb'],
+                        aggressive: !!aggressive
+                    })
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const items = data.results || (Array.isArray(data) ? data : []);
+                    term.innerHTML += `<div style="color:#00ff88;">[COMPLETE] Resolved ${items.length} .onion intelligence hits.</div>`;
+                    term.scrollTop = term.scrollHeight;
+
+                    if (resultsBox) {
+                        if (items.length === 0) {
+                            resultsBox.innerHTML = '<div style="color:#ffaa00; font-size:11px; padding:8px;">[INFO] No .onion hidden services or indexed dark web records match this target.</div>';
+                        } else {
+                            resultsBox.innerHTML = items.slice(0, 15).map(r => `
+                                <div style="background:rgba(192,132,252,0.08); border:1px solid rgba(192,132,252,0.35); padding:8px 12px; border-radius:3px; font-size:11px;">
+                                    <div style="font-weight:bold; color:#fff; display:flex; justify-content:space-between;">
+                                        <span><i class="fas fa-link" style="color:#c084fc;"></i> ${r.title || 'Tor Hidden Service'}</span>
+                                        <span class="s07-badge" style="color:#c084fc; border-color:#c084fc; background:rgba(192,132,252,0.15);">${r.source || 'TOR_ONION'}</span>
+                                    </div>
+                                    <div style="color:#00ffd1; font-size:12px; font-family:monospace; margin:3px 0; word-break:break-all;">${r.link || '#'}</div>
+                                    <div style="color:#a0b8c8; font-size:12px;">${r.snippet || ''}</div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                    return;
+                }
+                const errData = await resp.json().catch(() => ({ message: `HTTP ${resp.status}` }));
+                throw new Error(errData.message || `Server returned status ${resp.status}`);
+            } catch (err) {
+                term.innerHTML += `<div style="color:#ef4444;">[ERROR] Tor .onion crawl failed: ${err.message}</div>`;
+                term.innerHTML += `<div style="color:#94a3b8;">[DIAGNOSTIC] Ensure Flask backend is running and Tor SOCKS5 proxy on 127.0.0.1:9050 is listening.</div>`;
+                term.scrollTop = term.scrollHeight;
+
+                if (resultsBox) {
+                    resultsBox.innerHTML = `
+                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.35); padding:10px 14px; border-radius:3px; font-size:11px; color:#fca5a5;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Search Error:</strong> ${err.message}
+                            <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px;">No fake/simulated results displayed. Verify network connection and local Tor daemon.</div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // ── 2. LEAKS & DUMP RADAR EXECUTION ──
+        async function executeLeaksScrape() {
+            const input = document.getElementById('s07-leaks-query');
+            const term = document.getElementById('s07-leaks-terminal');
+            const resultsBox = document.getElementById('s07-leaks-results');
+            if (!input || !term) return;
+
+            const q = input.value.trim();
+            if (!q) {
+                term.innerHTML += `<div style="color:var(--cyber-amber, #ffaa00);">[WARN] Target identifier cannot be empty.</div>`;
+                term.scrollTop = term.scrollHeight;
+                return;
+            }
+
+            const sources = [];
+            if (document.getElementById('s07-leak-pastebin')?.checked) sources.push('pastebin');
+            if (document.getElementById('s07-leak-breach')?.checked)   sources.push('breach');
+            if (document.getElementById('s07-leak-telegram')?.checked) sources.push('telegram');
+            if (document.getElementById('s07-leak-discord')?.checked)  sources.push('discord');
+
+            term.innerHTML += `<div style="color:#00ffd1; margin-top:6px;">─── [INITIATING DUMP &amp; LEAK SWEEP: "${q}"] ───</div>`;
+            term.innerHTML += `<div>[RADAR] Targets: ${sources.join(', ') || 'all_open_dumps'}</div>`;
+            term.innerHTML += `<div>[SEARCH] Probing Pastebin mirrors, BreachForums dumps, Telegram leak caches...</div>`;
+            term.scrollTop = term.scrollHeight;
+
+            if (resultsBox) resultsBox.innerHTML = '<div style="color:#88a; font-size:11px; padding:10px;"><i class="fas fa-spinner fa-spin"></i> Scanning breach repositories...</div>';
+
+            try {
+                const resp = await fetch('/api/tools/web_scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: q,
+                        type: 'all',
+                        sources: sources.length ? sources : ['leaks', 'telegram'],
+                        aggressive: false
+                    })
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const items = data.results || (Array.isArray(data) ? data : []);
+                    term.innerHTML += `<div style="color:#00ff88;">[COMPLETE] Discovered ${items.length} real breach exposure records.</div>`;
+                    term.scrollTop = term.scrollHeight;
+
+                    if (resultsBox) {
+                        if (items.length === 0) {
+                            resultsBox.innerHTML = '<div style="color:#34d399; font-size:11px; padding:10px; background:rgba(52,211,153,0.06); border:1px solid rgba(52,211,153,0.25); border-radius:3px;">✓ Zero leak records found across searched dump indices for this identifier.</div>';
+                        } else {
+                            resultsBox.innerHTML = items.map(r => `
+                                <div style="background:rgba(192,132,252,0.08); border:1px solid rgba(192,132,252,0.35); padding:8px 12px; border-radius:3px; font-size:11px;">
+                                    <div style="font-weight:bold; color:#fff; display:flex; justify-content:space-between;">
+                                        <span><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> ${r.title || 'Breach Record'}</span>
+                                        <span class="s07-badge" style="color:#f59e0b; border-color:#f59e0b; background:rgba(245,158,11,0.15);">${r.source || 'EXPOSED_DUMP'}</span>
+                                    </div>
+                                    <div style="color:#00ffd1; font-size:12px; font-family:monospace; margin:3px 0; word-break:break-all;">${r.link || '#'}</div>
+                                    <div style="color:#a0b8c8; font-size:12px;">${r.snippet || ''}</div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                    return;
+                }
+                const errData = await resp.json().catch(() => ({ message: `HTTP ${resp.status}` }));
+                throw new Error(errData.message || `Server returned status ${resp.status}`);
+            } catch (err) {
+                term.innerHTML += `<div style="color:#ef4444;">[ERROR] Dump scan failed: ${err.message}</div>`;
+                term.scrollTop = term.scrollHeight;
+                if (resultsBox) {
+                    resultsBox.innerHTML = `
+                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.35); padding:10px 14px; border-radius:3px; font-size:11px; color:#fca5a5;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Dump Scan Failed:</strong> ${err.message}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // ── 3. CRIMINAL RECORDS & POLICE BLOTTERS EXECUTION ──
+        async function executeCrimeSearch() {
+            const fname = document.getElementById('s07-crime-fname')?.value.trim() || '';
+            const lname = document.getElementById('s07-crime-lname')?.value.trim() || '';
+            const mname = document.getElementById('s07-crime-mname')?.value.trim() || '';
+            const dob = document.getElementById('s07-crime-dob')?.value.trim() || '';
+            const address = document.getElementById('s07-crime-address')?.value.trim() || '';
+            const target = document.getElementById('s07-crime-target')?.value || 'WORLDWIDE';
+            const interpol = document.getElementById('s07-crime-interpol')?.checked ?? true;
+
+            const term = document.getElementById('s07-crime-terminal');
+            const resultsBox = document.getElementById('s07-crime-results');
+            if (!term) return;
+
+            if (!fname && !lname) {
+                term.innerHTML += `<div style="color:var(--cyber-amber, #ffaa00);">[WARN] Please specify at least First Name or Last Name to query court and police registries.</div>`;
+                term.scrollTop = term.scrollHeight;
+                return;
+            }
+
+            const fullName = `${fname} ${mname} ${lname}`.trim();
+            term.innerHTML += `<div style="color:#fbbf24; margin-top:6px;">─── [CROSS-REFERENCING CRIMINAL REGISTRIES: "${fullName}"] ───</div>`;
+            term.innerHTML += `<div>[JURISDICTION] Target: ${target} | INTERPOL Red Notices: ${interpol ? 'ENABLED' : 'DISABLED'}</div>`;
+            term.innerHTML += `<div>[DISPATCH] Querying FBI Most Wanted (api.fbi.gov), INTERPOL Red Notices, OpenSanctions, SOR Index...</div>`;
+            term.scrollTop = term.scrollHeight;
+
+            if (resultsBox) resultsBox.innerHTML = '<div style="color:#88a; font-size:11px; padding:10px;"><i class="fas fa-spinner fa-spin"></i> Querying judicial databases &amp; wanted notice archives...</div>';
+
+            try {
+                const resp = await fetch('/api/search/crime', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: fname,
+                        last_name: lname,
+                        mid_name: mname,
+                        dob: dob,
+                        address: address,
+                        target: target,
+                        interpol: interpol
+                    })
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const items = data.results || [];
+                    term.innerHTML += `<div style="color:#00ff88;">[COMPLETE] Found ${items.length} real records matching judicial queries.</div>`;
+                    term.scrollTop = term.scrollHeight;
+
+                    if (resultsBox) {
+                        if (items.length === 0) {
+                            resultsBox.innerHTML = '<div style="color:#34d399; font-size:11px; padding:10px; background:rgba(52,211,153,0.06); border:1px solid rgba(52,211,153,0.25); border-radius:3px;">✓ Clear: Zero warrants, Red Notices, or active criminal convictions found for this subject in official registries.</div>';
+                        } else {
+                            resultsBox.innerHTML = items.map(c => `
+                                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.4); padding:10px 14px; border-radius:3px; font-size:11px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div>
+                                            <span style="font-weight:bold; color:#fff; font-size:12px;">${c.name || fullName}</span>
+                                            ${c.dob ? `<span style="color:#94a3b8; font-size:12px; margin-left:8px;">DOB: ${c.dob}</span>` : ''}
+                                        </div>
+                                        <span class="s07-badge" style="color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,0.2);">${c.status || 'RECORD'}</span>
+                                    </div>
+                                    <div style="color:#fbbf24; font-weight:bold; font-size:11px; margin-top:3px;">
+                                        <i class="fas fa-exclamation-circle"></i> ${c.offense || 'Criminal Offense Record'}
+                                    </div>
+                                    <div style="color:#cbd5e1; font-size:12px; margin-top:3px;">${c.details || 'Official record matched in jurisdiction registry.'}</div>
+                                    <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center; font-size: 12px; color:#94a3b8;">
+                                        <span>SOURCE: <strong style="color:#00ffd1;">${c.source || 'Judicial DB'}</strong></span>
+                                        ${c.location ? `<a href="${c.location}" target="_blank" style="color:#c084fc; text-decoration:none;"><i class="fas fa-external-link-alt"></i> VIEW OFFICIAL DOSSIER</a>` : ''}
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                    return;
+                }
+                const errData = await resp.json().catch(() => ({ message: `HTTP ${resp.status}` }));
+                throw new Error(errData.message || `Server returned status ${resp.status}`);
+            } catch (err) {
+                term.innerHTML += `<div style="color:#ef4444;">[ERROR] Criminal query failed: ${err.message}</div>`;
+                term.scrollTop = term.scrollHeight;
+
+                if (resultsBox) {
+                    resultsBox.innerHTML = `
+                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.35); padding:10px 14px; border-radius:3px; font-size:11px; color:#fca5a5;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Criminal Query Failed:</strong> ${err.message}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // ── 4. SUSPECT PHOTO & BIOMETRIC REVERSE MATCH ──
+        function handlePhotoSelect(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            currentPhotoFile = file;
+            const filenameLabel = document.getElementById('s07-photo-filename');
+            if (filenameLabel) filenameLabel.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('s07-photo-preview');
+                const emptyLabel = document.getElementById('s07-photo-empty-label');
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                if (emptyLabel) emptyLabel.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function executePhotoSearch() {
+            const term = document.getElementById('s07-photo-terminal');
+            const resultsBox = document.getElementById('s07-photo-results');
+            if (!term) return;
+
+            if (!currentPhotoFile) {
+                term.innerHTML += `<div style="color:var(--cyber-amber, #ffaa00);">[WARN] Please upload or drag &amp; drop a photo before running biometric search.</div>`;
+                term.scrollTop = term.scrollHeight;
+                return;
+            }
+
+            term.innerHTML += `<div style="color:#34d399; margin-top:6px;">─── [INITIATING BIOMETRIC &amp; REVERSE IMAGE SCAN] ───</div>`;
+            term.innerHTML += `<div>[EXTRACT] Uploading visual payload to real facial &amp; reverse engines...</div>`;
+            term.innerHTML += `<div>[ENGINES] Querying Yandex CBIR, Bing Visual, and INTERPOL Red Notice database...</div>`;
+            term.scrollTop = term.scrollHeight;
+
+            if (resultsBox) resultsBox.innerHTML = '<div style="color:#88a; font-size:11px; padding:10px;"><i class="fas fa-spinner fa-spin"></i> Cross-referencing visual databases...</div>';
+
+            try {
+                const formData = new FormData();
+                formData.append('photo', currentPhotoFile);
+
+                const resp = await fetch('/api/search/photo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const items = data.results || [];
+                    const logs = data.logs || [];
+                    logs.forEach(l => {
+                        term.innerHTML += `<div>${l}</div>`;
+                    });
+                    term.innerHTML += `<div style="color:#00ff88;">[COMPLETE] Resolved ${items.length} real visual matches across engines.</div>`;
+                    term.scrollTop = term.scrollHeight;
+
+                    if (resultsBox) {
+                        if (items.length === 0) {
+                            resultsBox.innerHTML = '<div style="color:#ffaa00; font-size:11px; padding:10px; background:rgba(255,170,0,0.06); border:1px solid rgba(255,170,0,0.25); border-radius:3px;"><i class="fas fa-info-circle"></i> Zero facial or visual matches identified across indexed repositories.</div>';
+                        } else {
+                            resultsBox.innerHTML = items.map(m => `
+                                <div style="background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.35); padding:8px 12px; border-radius:3px; font-size:11px; display:flex; gap:10px; align-items:center;">
+                                    ${m.image_url ? `<img src="${m.image_url}" style="width:48px; height:48px; object-fit:cover; border-radius:3px; border:1px solid rgba(52,211,153,0.4);" onerror="this.style.display='none'" />` : ''}
+                                    <div style="flex:1;">
+                                        <div style="font-weight:bold; color:#fff; display:flex; justify-content:space-between;">
+                                            <span>${m.title || 'Visual Match'}</span>
+                                            <span class="s07-badge" style="color:#34d399; border-color:#34d399; background:rgba(52,211,153,0.15);">${m.similarity || m.source || 'MATCH'}</span>
+                                        </div>
+                                        <div style="color:#94a3b8; font-size:12px;">Source: <strong style="color:#00ffd1;">${m.source || 'Visual Search'}</strong> ${m.dob ? `&bull; DOB: ${m.dob}` : ''}</div>
+                                        ${m.page_url ? `<a href="${m.page_url}" target="_blank" style="color:#c084fc; font-size:11.5px; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Source Record</a>` : ''}
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                    return;
+                }
+                const errData = await resp.json().catch(() => ({ message: `HTTP ${resp.status}` }));
+                throw new Error(errData.message || `Server returned status ${resp.status}`);
+            } catch (err) {
+                term.innerHTML += `<div style="color:#ef4444;">[ERROR] Biometric scan failed: ${err.message}</div>`;
+                term.scrollTop = term.scrollHeight;
+
+                if (resultsBox) {
+                    resultsBox.innerHTML = `
+                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.35); padding:10px 14px; border-radius:3px; font-size:11px; color:#fca5a5;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Photo Search Failed:</strong> ${err.message}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // ── 5. REAL TOR DAEMON SOCKS5 TELEMETRY ──
+        async function pingTorDaemon() {
+            const term = document.getElementById('s07-tor-terminal');
+            const ind = document.getElementById('s07-status-indicator');
+            if (!term) return;
+
+            term.innerHTML += `<div style="color:#c084fc; margin-top:4px;">─── [TESTING REAL TOR SOCKS5 DAEMON] ───</div>`;
+            term.innerHTML += `<div>[CHECK] Testing real SOCKS5 socket (127.0.0.1:9050) &amp; Control Port (127.0.0.1:9051)...</div>`;
+            term.scrollTop = term.scrollHeight;
+
+            try {
+                const res = await fetch('/api/tor/status');
+                const data = await res.json();
+                
+                if (data.status === 'online') {
+                    term.innerHTML += `<div style="color:#00ff88;">[ONLINE] SOCKS5 proxy 127.0.0.1:9050 is ACTIVE (Latency: ${data.socks5.latency_ms}ms).</div>`;
+                    term.innerHTML += `<div>[CONTROL] Control Port 9051: ${data.control.online ? '<span style="color:#00ffd1;">LISTENING</span>' : '<span style="color:#f59e0b;">INACTIVE</span>'}</div>`;
+                    if (data.exit_ip) {
+                        term.innerHTML += `<div>[CIRCUIT] Exit Node IP: <strong style="color:#00ffd1;">${data.exit_ip}</strong></div>`;
+                    }
+                    if (ind) {
+                        ind.textContent = '● PROXY ONLINE (9050)';
+                        ind.style.color = '#34d399';
+                        ind.style.borderColor = '#34d399';
+                    }
+                } else {
+                    term.innerHTML += `<div style="color:#ef4444;">[OFFLINE] Tor daemon is NOT running on 127.0.0.1:9050.</div>`;
+                    term.innerHTML += `<div style="color:#f59e0b;">[START] Launch daemon: <code>start.bat</code> or <code>start.bat --tor</code></div>`;
+                    if (ind) {
+                        ind.textContent = '● TOR OFFLINE (9050)';
+                        ind.style.color = '#ef4444';
+                        ind.style.borderColor = '#ef4444';
+                    }
+                }
+            } catch (e) {
+                term.innerHTML += `<div style="color:#ef4444;">[ERROR] Backend connection failed: ${e.message}</div>`;
+                if (ind) {
+                    ind.textContent = '● BACKEND UNREACHABLE';
+                    ind.style.color = '#ef4444';
+                    ind.style.borderColor = '#ef4444';
+                }
+            }
+            term.scrollTop = term.scrollHeight;
+        }
+
+        async function requestNewTorIdentity() {
+            const term = document.getElementById('s07-tor-terminal');
+            if (!term) return;
+            term.innerHTML += `<div style="color:#00ffd1; margin-top:4px;">─── [DISPATCHING REAL SIGNAL NEWNYM] ───</div>`;
+            term.innerHTML += `<div>[SIGNAL] Transmitting NEWNYM request to 127.0.0.1:9051 via backend...</div>`;
+            term.scrollTop = term.scrollHeight;
+
+            try {
+                const res = await fetch('/api/tor/newnym', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    term.innerHTML += `<div style="color:#00ff88;">[SUCCESS] ${data.message}</div>`;
+                    showToast('TOR_CIRCUIT_CYCLED: NEW IDENTITY ACTIVE');
+                } else {
+                    term.innerHTML += `<div style="color:#ef4444;">[FAILED] ${data.message}</div>`;
+                    showToast('CIRCUIT_ROTATION_FAILED');
+                }
+            } catch (err) {
+                term.innerHTML += `<div style="color:#ef4444;">[ERROR] Failed to dispatch circuit rotation: ${err.message}</div>`;
+            }
+            term.scrollTop = term.scrollHeight;
+        }
+
+        // Setup button listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnOsint = document.getElementById('btn-osint');
+            const btnDarkweb = document.getElementById('btn-darkweb');
+            const closeBtn = document.getElementById('close-osint-btn');
+
+            if (btnDarkweb) {
+                btnDarkweb.addEventListener('click', () => {
+                    const modal = document.getElementById('darkweb-modal');
+                    if (modal && modal.style.display === 'flex' && !modal.classList.contains('hidden')) {
+                        closeDarkWebModal();
+                    } else {
+                        openDarkWebModal();
+                    }
+                });
+            }
+
+            if (btnOsint) {
+                btnOsint.addEventListener('click', () => {
+                    const modal = document.getElementById('osint-modal');
+                    if (modal && modal.style.display === 'flex' && !modal.classList.contains('hidden')) {
+                        closeOsintModal();
+                    } else {
+                        openOsintModal();
+                    }
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeOsintModal);
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeOsintModal();
+                }
+            });
+
+            // 1. DNS Lookup Handler
+            const dnsInput = document.getElementById('osint-dns-input');
+            const dnsBtn = document.getElementById('osint-dns-btn');
+            const dnsResult = document.getElementById('osint-dns-result');
+
+            async function runDnsQuery() {
+                const domain = dnsInput?.value?.trim();
+                if (!domain || !dnsResult) return;
+                dnsResult.style.display = 'block';
+                dnsResult.textContent = 'Resolving DNS records (A, MX, NS, TXT)...';
+                try {
+                    const res = await fetch(`/api/osint/dns?domain=${encodeURIComponent(domain)}`);
+                    const data = await res.json();
+                    if (data.error) {
+                        dnsResult.innerHTML = `<span style="color:#ff4444">ERROR: ${data.error}</span>`;
+                    } else {
+                        dnsResult.textContent = JSON.stringify(data, null, 2);
+                    }
+                } catch (err) {
+                    dnsResult.innerHTML = `<span style="color:#ff4444">DNS lookup failed: ${err.message}</span>`;
+                }
+            }
+
+            dnsBtn?.addEventListener('click', runDnsQuery);
+            dnsInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') runDnsQuery();
+            });
+
+            // 2. OFAC Sanctions Search Handler
+            const sancInput = document.getElementById('osint-sanctions-input');
+            const sancBtn = document.getElementById('osint-sanctions-btn');
+            const sancResult = document.getElementById('osint-sanctions-result');
+
+            async function runSanctionsSearch() {
+                const query = sancInput?.value?.trim();
+                if (!query || !sancResult) return;
+                sancResult.style.display = 'block';
+                sancResult.textContent = 'Searching OFAC Specially Designated Nationals list...';
+                try {
+                    const res = await fetch(`/api/osint/sanctions?query=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+                    if (data.error) {
+                        sancResult.innerHTML = `<span style="color:#ff4444">ERROR: ${data.error}</span>`;
+                    } else {
+                        const matches = data.results || [];
+                        if (matches.length === 0) {
+                            sancResult.innerHTML = '<span style="color:#34d399">✓ No matches found in OFAC SDN list.</span>';
+                        } else {
+                            sancResult.innerHTML = `<div style="color:var(--cyber-cyan); font-size:12.5px; font-weight:bold; margin-bottom:8px;">MATCHES FOUND: ${data.count}</div>` +
+                                matches.slice(0, 30).map(m => `
+                                    <div style="margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px;">
+                                        <strong style="color:#fb923c">${m.name || 'Unknown'}</strong>
+                                        ${m.sdnType ? ` <span style="color:#94a3b8; font-size: 12.5px;">[${m.sdnType}]</span>` : ''}
+                                        ${m.program && m.program.length ? `<br><span style="color:#f59e0b; font-size: 12.5px;">PROGRAM: ${Array.isArray(m.program) ? m.program.join(', ') : m.program}</span>` : ''}
+                                        ${m.nationality && m.nationality.length ? `<br><span style="color:#94a3b8; font-size: 12.5px;">NAT: ${Array.isArray(m.nationality) ? m.nationality.join(', ') : m.nationality}</span>` : ''}
+                                        ${m.remarks ? `<br><span style="color:#64748b; font-size: 12px;">${m.remarks}</span>` : ''}
+                                    </div>
+                                `).join('');
+                        }
+                    }
+                } catch (err) {
+                    sancResult.innerHTML = `<span style="color:#ff4444">Sanctions search failed: ${err.message}</span>`;
+                }
+            }
+
+            sancBtn?.addEventListener('click', runSanctionsSearch);
+            sancInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') runSanctionsSearch();
+            });
+
+            // 3. Overpass POI Scan Handler
+            const overpassBtn = document.getElementById('osint-overpass-btn');
+            const overpassRadius = document.getElementById('osint-overpass-radius');
+            const overpassResult = document.getElementById('osint-overpass-result');
+
+            overpassBtn?.addEventListener('click', async () => {
+                if (!overpassResult) return;
+                const radius = parseInt(overpassRadius?.value || '500');
+                let lat = 0, lon = 0;
+                if (typeof map !== 'undefined' && map && map.getCenter) {
+                    const c = map.getCenter();
+                    lat = c.lat;
+                    lon = c.lng;
+                } else {
+                    lat = 51.505;
+                    lon = -0.09;
+                }
+
+                overpassResult.style.display = 'block';
+                overpassResult.textContent = `Querying Overpass API (${radius}m around ${lat.toFixed(4)}°, ${lon.toFixed(4)}°)...`;
+
+                try {
+                    const res = await fetch(`/api/osint/overpass?lat=${lat}&lon=${lon}&radius=${radius}`);
+                    const data = await res.json();
+                    if (data.error) {
+                        overpassResult.innerHTML = `<span style="color:#ff4444">ERROR: ${data.error}</span>`;
+                    } else {
+                        const items = data.elements || [];
+                        if (items.length === 0) {
+                            overpassResult.innerHTML = '<span style="color:#a78bfa">No infrastructure nodes found in this radius.</span>';
+                        } else {
+                            overpassResult.innerHTML = `<div style="color:#a78bfa; font-size:12.5px; font-weight:bold; margin-bottom:8px;">NODES INTERCEPTED: ${items.length}</div>` +
+                                items.slice(0, 40).map(el => {
+                                    const name = el.name || el.amenity || el.military || el.aeroway || el.building || el.communication || 'Infrastructure Node';
+                                    const cat = el.amenity || el.military || el.aeroway || el.landuse || el.building || el.type || 'poi';
+                                    return `
+                                        <div style="margin-bottom:4px; padding:3px 0; border-bottom:1px solid rgba(167,139,250,0.15); display:flex; justify-content:space-between; align-items:center;">
+                                            <div>
+                                                <span style="color:#a78bfa; font-weight:bold;">${name}</span>
+                                                <span style="color:#94a3b8; font-size: 12px; margin-left:6px;">[${cat.toUpperCase()}]</span>
+                                            </div>
+                                            <span style="color:rgba(0,255,209,0.7); font-size: 12px; font-family:monospace;">${el.lat ? el.lat.toFixed(4) : ''}, ${el.lon ? el.lon.toFixed(4) : ''}</span>
+                                        </div>
+                                    `;
+                                }).join('');
+                        }
+                    }
+                } catch (err) {
+                    overpassResult.innerHTML = `<span style="color:#ff4444">Overpass scan failed: ${err.message}</span>`;
+                }
+            });
+
+            // 4. Dark Web Section in OSINT Modal
+            const osintDwBtn = document.getElementById('osint-darkweb-btn');
+            const osintDwInput = document.getElementById('osint-darkweb-input');
+            const osintDwResult = document.getElementById('osint-darkweb-result');
+
+            async function runOsintDarkWebSearch() {
+                if (!osintDwResult) return;
+                const q = osintDwInput?.value.trim();
+                if (!q) {
+                    osintDwResult.style.display = 'block';
+                    osintDwResult.innerHTML = '<span style="color:#ffaa00">Please enter a query or target keyword</span>';
+                    return;
+                }
+                osintDwResult.style.display = 'block';
+                osintDwResult.innerHTML = `<span style="color:#c084fc"><i class="fas fa-spinner fa-spin"></i> Querying 16 .onion search engines for "${q}"...</span>`;
+                try {
+                    const res = await fetch('/api/tools/web_scan', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: q, type: 'all', sources: ['darkweb', 'leaks'], aggressive: true })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const items = data.results || (Array.isArray(data) ? data : []);
+                        if (items.length === 0) {
+                            osintDwResult.innerHTML = '<span style="color:#34d399">✓ No dark web leaks or exposed hashes found.</span>';
+                        } else {
+                            osintDwResult.innerHTML = `<div style="color:#c084fc; font-size:12.5px; font-weight:bold; margin-bottom:6px;">INTELLIGENCE CAPTURES: ${items.length}</div>` +
+                                items.slice(0, 5).map(it => `
+                                    <div style="margin-bottom:6px; border-bottom:1px solid rgba(192,132,252,0.2); padding-bottom:4px;">
+                                        <div style="color:#fff; font-weight:bold;">${it.title || 'Intel Record'}</div>
+                                        <div style="color:#00ffd1; font-size: 12.5px; word-break:break-all;">${it.link || '#'}</div>
+                                        <div style="color:#94a3b8; font-size: 12px;">${it.snippet || ''}</div>
+                                    </div>
+                                `).join('');
+                        }
+                        return;
+                    }
+                    throw new Error(`HTTP ${res.status}`);
+                } catch (e) {
+                    osintDwResult.innerHTML = `
+                        <div style="color:#ef4444; font-size:11px; margin-bottom:4px;"><i class="fa-solid fa-triangle-exclamation"></i> [TOR/OSINT SCAN FAILED]</div>
+                        <div style="color:#cbd5e1; font-size: 12.5px;">Failed to query .onion intelligence for "${q}": ${e.message}</div>
+                        <div style="color:#94a3b8; font-size: 12px; margin-top:4px;">Verify server connection and SOCKS5 proxy status. Real queries only; no simulated fallback.</div>
+                    `;
+                }
+            }
+
+            osintDwBtn?.addEventListener('click', runOsintDarkWebSearch);
+            osintDwInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') runOsintDarkWebSearch();
+            });
+
+            // ESC closes modals
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeOsintModal();
+                    closeDarkWebModal();
+                    if (typeof closeNodeModal === 'function') closeNodeModal();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

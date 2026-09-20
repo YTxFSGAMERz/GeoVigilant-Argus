@@ -1,0 +1,28 @@
+{
+  "name": "terra5-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "pull-env": "python scripts/pull_env.py"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1",
+    "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "esbuild": true
+  },
+  "dependencies": {
+    "@noble/ed25519": "^3.1.0",
+    "@noble/hashes": "^2.3.0",
+    "@turf/turf": "^7.3.5",
+    "@vercel/analytics": "^2.0.1",
+    "geojson": "^0.5.0",
+    "maplibre-gl": "^6.4.1"
+  }
+}

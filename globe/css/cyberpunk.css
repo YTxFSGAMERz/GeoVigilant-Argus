@@ -1,0 +1,396 @@
+/* ==========================================================================
+   GeoVigilant-Argus Cyberpunk Tactical HUD Styling Framework
+   ========================================================================== */
+
+:root {
+    --cyber-cyan: #00FFD1;
+    --cyber-cyan-dim: rgba(0, 255, 209, 0.4);
+    --cyber-cyan-glow: 0 0 15px rgba(0, 255, 209, 0.5);
+    --cyber-bg: #020a0f;
+    --cyber-panel: rgba(2, 14, 20, 0.92);
+    --cyber-border: rgba(0, 255, 209, 0.25);
+    --cyber-amber: #FFCC00;
+    --cyber-red: #FF0055;
+    --cyber-purple: #BC13FE;
+    --cyber-font-mono: 'Share Tech Mono', 'Roboto Mono', monospace;
+    --cyber-font-orbitron: 'Orbitron', 'Segoe UI', sans-serif;
+}
+
+/* Base HUD Elements */
+body {
+    background-color: var(--cyber-bg);
+    color: var(--cyber-cyan);
+    font-family: var(--cyber-font-mono);
+    font-size: 15.5px;
+    line-height: 1.5;
+}
+
+button {
+    font-family: var(--cyber-font-mono);
+    background: transparent;
+    color: inherit;
+    border: none;
+    outline: none;
+}
+
+/* Glowing text & border utilities */
+.glow-cyan {
+    text-shadow: 0 0 10px var(--cyber-cyan), 0 0 20px rgba(0, 255, 209, 0.4);
+}
+
+.glow-amber {
+    text-shadow: 0 0 10px var(--cyber-amber), 0 0 20px rgba(255, 204, 0, 0.4);
+}
+
+.glow-red {
+    text-shadow: 0 0 10px var(--cyber-red), 0 0 20px rgba(255, 0, 85, 0.4);
+}
+
+.border-glow-cyan {
+    border: 1px solid var(--cyber-cyan) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 209, 0.3) !important;
+}
+
+.border-glow-red {
+    border: 1px solid var(--cyber-red) !important;
+    box-shadow: 0 0 15px rgba(255, 0, 85, 0.3) !important;
+}
+
+/* Tactical Panel */
+.tactical-panel {
+    background: var(--cyber-panel);
+    border: 1px solid var(--cyber-border);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 255, 209, 0.05);
+    border-radius: 4px;
+}
+
+/* Custom Tactical Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 10, 15, 0.95);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 209, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 209, 0.7);
+    box-shadow: 0 0 8px var(--cyber-cyan);
+}
+
+/* Cyber Button */
+.cyber-btn {
+    background: rgba(0, 255, 209, 0.08);
+    border: 1px solid var(--cyber-cyan);
+    color: var(--cyber-cyan);
+    padding: 9px 18px;
+    font-family: var(--cyber-font-mono);
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.cyber-btn:hover {
+    background: var(--cyber-cyan);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 209, 0.6);
+}
+
+/* Scanline Effect Overlay */
+.scanline-overlay {
+    pointer-events: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 3px, 6px 100%;
+    z-index: 999;
+}
+
+/* ==========================================================================
+   SHARED TACTICAL HUD HEADER
+   Used by Surveillance, News, and News Networks pages
+   ========================================================================== */
+
+/* Argus Classification Header — matches groundview.html #gv-header */
+.argus-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: rgba(2, 8, 14, 0.97);
+    border-bottom: 1px solid var(--cyber-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    z-index: 500;
+    font-family: var(--cyber-font-mono);
+    font-size: 14.5px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.argus-header .header-left {
+    color: var(--cyber-red);
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+}
+
+.argus-header .header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--cyber-cyan);
+    flex: 1;
+    justify-content: center;
+    white-space: nowrap;
+    font-size: 15px;
+}
+
+.argus-header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: rgba(0, 255, 209, 0.7);
+    white-space: nowrap;
+}
+
+/* Pulsing logo dot in header center */
+.argus-logo-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--cyber-cyan);
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+    box-shadow: 0 0 8px var(--cyber-cyan);
+    animation: argus-pulse 2s ease-in-out infinite;
+}
+
+@keyframes argus-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--cyber-cyan); }
+    50% { opacity: 0.5; box-shadow: 0 0 3px var(--cyber-cyan); }
+}
+
+/* Online status badge in header right */
+.argus-online-badge {
+    color: #00FF88;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Navigation button — matches .gv-header-btn / .header-action-btn */
+.argus-nav-btn {
+    background: rgba(0, 255, 209, 0.07);
+    border: 1px solid rgba(0, 255, 209, 0.3);
+    color: var(--cyber-cyan);
+    padding: 6px 14px;
+    font-family: var(--cyber-font-mono);
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.argus-nav-btn:hover {
+    background: rgba(0, 255, 209, 0.2);
+    border-color: var(--cyber-cyan);
+    box-shadow: 0 0 10px rgba(0, 255, 209, 0.3);
+    color: var(--cyber-cyan);
+}
+
+.argus-nav-btn.active {
+    background: rgba(0, 255, 209, 0.18);
+    border-color: var(--cyber-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 209, 0.4);
+}
+
+/* ==========================================================================
+   TACTICAL CORNER BRACKETS
+   ========================================================================== */
+
+.argus-corner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.argus-corner-tl {
+    top: 3px; left: 3px;
+    border-top: 2px solid rgba(0, 255, 209, 0.5);
+    border-left: 2px solid rgba(0, 255, 209, 0.5);
+}
+
+.argus-corner-tr {
+    top: 3px; right: 3px;
+    border-top: 2px solid rgba(0, 255, 209, 0.5);
+    border-right: 2px solid rgba(0, 255, 209, 0.5);
+}
+
+.argus-corner-bl {
+    bottom: 3px; left: 3px;
+    border-bottom: 2px solid rgba(0, 255, 209, 0.5);
+    border-left: 2px solid rgba(0, 255, 209, 0.5);
+}
+
+.argus-corner-br {
+    bottom: 3px; right: 3px;
+    border-bottom: 2px solid rgba(0, 255, 209, 0.5);
+    border-right: 2px solid rgba(0, 255, 209, 0.5);
+}
+
+/* ==========================================================================
+   TACTICAL HUD PANEL
+   ========================================================================== */
+
+.argus-panel {
+    background: rgba(2, 14, 20, 0.94);
+    border: 1px solid var(--cyber-border);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 255, 209, 0.03);
+}
+
+.argus-panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--cyber-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15.5px;
+    letter-spacing: 1px;
+    color: var(--cyber-cyan);
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   CYBER INPUT FIELDS
+   ========================================================================== */
+
+.argus-input {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--cyber-border);
+    color: var(--cyber-cyan);
+    font-family: var(--cyber-font-mono);
+    font-size: 15px;
+    padding: 9px 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.argus-input:focus {
+    border-color: var(--cyber-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 209, 0.2);
+}
+
+.argus-input::placeholder {
+    color: rgba(0, 255, 209, 0.3);
+}
+
+.argus-select {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--cyber-border);
+    color: var(--cyber-cyan);
+    font-family: var(--cyber-font-mono);
+    font-size: 15px;
+    padding: 8px 12px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.argus-select:focus {
+    border-color: var(--cyber-cyan);
+}
+
+/* ==========================================================================
+   STATUS BADGES
+   ========================================================================== */
+
+.argus-badge {
+    font-size: 13.5px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.argus-badge-cyan {
+    background: rgba(0, 255, 209, 0.15);
+    border: 1px solid rgba(0, 255, 209, 0.4);
+    color: var(--cyber-cyan);
+}
+
+.argus-badge-amber {
+    background: rgba(255, 204, 0, 0.12);
+    border: 1px solid rgba(255, 204, 0, 0.4);
+    color: var(--cyber-amber);
+}
+
+.argus-badge-red {
+    background: rgba(255, 0, 85, 0.12);
+    border: 1px solid rgba(255, 0, 85, 0.4);
+    color: var(--cyber-red);
+}
+
+/* ==========================================================================
+   SECTION LABEL
+   ========================================================================== */
+
+.argus-section-label {
+    font-size: 14.5px;
+    color: rgba(0, 255, 209, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 255, 209, 0.12);
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Blinking recording dot */
+.argus-rec-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--cyber-red);
+    border-radius: 50%;
+    animation: argus-blink 1s step-start infinite;
+    box-shadow: 0 0 6px var(--cyber-red);
+}
+
+@keyframes argus-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* UTC Timestamp badge */
+#argus-timestamp {
+    font-size: 14px;
+    color: rgba(0, 255, 209, 0.7);
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+

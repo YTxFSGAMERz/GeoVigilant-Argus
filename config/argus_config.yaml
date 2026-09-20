@@ -1,0 +1,28 @@
+system:
+  max_threads: 16
+  min_free_disk_percent: 10.0
+  user_agent: ARGUSGroundViewBot/1.0 (https://github.com/YTxFSGAMERz/GeoVigilant-Argus; contact@geovigilant.org) requests/2.31.0
+  base_dir: ARGUS_DATASET
+discovery:
+  wikidata_endpoint: https://query.wikidata.org/sparql
+  overpass_endpoint: https://overpass-api.de/api/interpreter
+  h3_resolution: 10
+  spatial_dedup_radius_m: 35.0
+  sample_limit_per_category: 50
+acquisition:
+  target_images_per_landmark: 15
+  min_images_per_landmark: 5
+  radial_steps_meters:
+  - 250
+  - 500
+  - 1000
+  phash_hamming_threshold: 10
+  heading_difference_threshold_deg: 30.0
+  temporal_difference_threshold_days: 90
+  max_download_workers: 16
+rate_limits:
+  wikimedia_req_per_sec: 3
+  mapillary_req_per_sec: 30
+  kartaview_req_per_sec: 10
+tokens:
+  mapillary_access_token: ""

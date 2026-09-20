@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoVigilant — News Networks</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts: Orbitron + Share Tech Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/css/cyberpunk.css">
+    <link rel="stylesheet" href="/static/css/argus-ai.css">
+    <link rel="stylesheet" href="/static/vendor/katex.min.css">
+    <link rel="stylesheet" href="/static/css/argus-kiosk.css">
+    <script src="/static/js/argus-kiosk.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--cyber-bg);
+            color: var(--cyber-cyan);
+            font-family: var(--cyber-font-mono);
+            min-height: 100vh;
+        }
+
+        .networks-container {
+            padding: 24px 28px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-banner {
+            background: rgba(2, 14, 20, 0.9);
+            border: 1px solid var(--cyber-border);
+            border-left: 3px solid var(--cyber-amber);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-banner h1 {
+            margin: 0;
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #FFF;
+            font-family: var(--cyber-font-orbitron);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-banner p {
+            margin: 4px 0 0 0;
+            font-size: 12.5px;
+            color: rgba(0, 255, 209, 0.5);
+            letter-spacing: 0.5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+        }
+
+        .region-card {
+            background: rgba(2, 14, 20, 0.85);
+            border: 1px solid var(--cyber-border);
+            padding: 14px;
+            position: relative;
+            transition: 0.2s ease;
+        }
+
+        .region-card:hover {
+            border-color: var(--cyber-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 209, 0.15);
+        }
+
+        .region-title {
+            font-size: 12px;
+            font-family: var(--cyber-font-orbitron);
+            color: var(--cyber-amber);
+            border-bottom: 1px solid rgba(255, 204, 0, 0.2);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 1px;
+        }
+
+        .feed-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .feed-item {
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(0, 255, 209, 0.1);
+            font-size: 12.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            word-break: break-all;
+        }
+
+        .feed-item a {
+            color: rgba(0, 255, 209, 0.75);
+            text-decoration: none;
+            transition: 0.15s;
+        }
+
+        .feed-item a:hover {
+            color: #FFF;
+            text-shadow: 0 0 8px var(--cyber-cyan);
+        }
+
+        .feed-tag {
+            font-size: 11.5px;
+            padding: 1px 5px;
+            background: rgba(0, 255, 209, 0.1);
+            border: 1px solid var(--cyber-border);
+            color: var(--cyber-cyan);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .feed-tag.api {
+            background: rgba(255, 204, 0, 0.1);
+            border-color: rgba(255, 204, 0, 0.4);
+            color: var(--cyber-amber);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TACTICAL CLASSIFICATION HEADER -->
+    <header class="argus-header">
+        <div class="header-left">TOP SECRET // SI-TK // NOFORN</div>
+        <div class="header-center">
+            <span class="argus-logo-dot"></span>
+            <span style="font-family: var(--cyber-font-orbitron); font-size: 11px;">ARGUS</span>
+            <span style="color: rgba(0,255,209,0.4); font-size: 14px;">&#9673;</span>
+            <span style="color: var(--cyber-amber); font-size: 12.5px; letter-spacing: 1px;">NEWS NETWORKS</span>
+            <span style="color: rgba(0,255,209,0.3); font-size: 11.5px;">// INTEL AGGREGATION REGISTRY</span>
+            <button class="argus-nav-btn" onclick="window.location.href='/'"><i class="fas fa-home"></i> OVERVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/earth'"><i class="fas fa-globe"></i> 3D GLOBE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/ground'"><i class="fas fa-map"></i> GROUNDVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/surveillance'"><i class="fas fa-wifi"></i> SURVEILLANCE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/news'"><i class="fas fa-satellite-dish"></i> NEWS STREAM</button>
+            <button class="argus-nav-btn active" onclick="window.location.href='/newsnetworks'"><i class="fas fa-broadcast-tower"></i> NETWORKS</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/social/reddit'"><i class="fab fa-reddit"></i> REDDIT</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/social/twitter'"><i class="fab fa-twitter"></i> TWITTER</button>
+            <button class="argus-nav-btn open-argus-ai" id="btn-argus-core" style="color: var(--cyber-cyan); border-color: var(--cyber-cyan); font-weight: bold; background: rgba(0,255,209,0.14); cursor: pointer;" title="Open ARGUS AI Tactical Assistant"><i class="fas fa-shield-alt"></i> ARGUS CORE</button>
+        </div>
+        <div class="header-right">
+            <span class="argus-online-badge">&#9679; ONLINE</span>
+            <span id="argus-timestamp">REC 0000-00-00 00:00:00Z</span>
+        </div>
+    </header>
+
+    <div class="networks-container">
+        <div class="page-banner">
+            <div>
+                <h1><i class="fas fa-satellite" style="color: var(--cyber-amber);"></i> GLOBAL NEWS NETWORK REGISTRY</h1>
+                <p>ACTIVE GEO-INTELLIGENCE FEEDS &amp; RSS AGGREGATION MATRIX</p>
+            </div>
+            <div style="font-size: 12.5px; color: var(--cyber-cyan);">
+                <i class="fas fa-sync fa-spin"></i> MULTI-SOURCE FEED ACTIVE
+            </div>
+        </div>
+
+        <!-- SPECIALIZED SOCIAL OSINT WORKSTATIONS -->
+        <div style="margin-bottom: 24px; padding: 16px 20px; background: rgba(0, 255, 209, 0.04); border: 1px solid rgba(0, 255, 209, 0.25); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(0, 255, 209, 0.15); padding-bottom: 8px;">
+                <div style="font-family: var(--cyber-font-orbitron); font-size: 13px; font-weight: bold; color: var(--cyber-amber); letter-spacing: 1px;">
+                    <i class="fas fa-users-viewfinder" style="margin-right: 6px;"></i> SPECIALIZED SOCIAL OSINT WORKSTATIONS
+                </div>
+                <span style="font-family: var(--cyber-font-mono); font-size: 12px; color: #00FF88;">● OPERATIONAL RECON MESH</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <!-- Reddit Card -->
+                <div onclick="window.location.href='/social/reddit'" style="cursor: pointer; padding: 14px; background: rgba(2, 10, 18, 0.85); border: 1px solid rgba(255, 69, 0, 0.4); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.borderColor='#FF4500'; this.style.boxShadow='0 0 12px rgba(255,69,0,0.3)';" onmouseout="this.style.borderColor='rgba(255,69,0,0.4)'; this.style.boxShadow='none';">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-family: var(--cyber-font-orbitron); font-size: 13px; font-weight: bold; color: #FF4500;"><i class="fab fa-reddit" style="margin-right: 6px;"></i> REDDIT OSINT MESH</span>
+                        <span style="font-size: 11px; padding: 2px 6px; background: rgba(255,69,0,0.15); color: #FF4500; border: 1px solid rgba(255,69,0,0.3); border-radius: 2px;">LIVE INTEL</span>
+                    </div>
+                    <p style="font-family: var(--cyber-font-mono); font-size: 12px; color: rgba(255,255,255,0.7); margin: 0 0 8px 0; line-height: 1.4;">Community sentiment analysis, sub-reddit entity network graphs, and automated intelligence reporting.</p>
+                    <div style="font-family: var(--cyber-font-mono); font-size: 11.5px; color: var(--cyber-cyan); display: flex; align-items: center; gap: 6px;">
+                        <span>LAUNCH WORKSPACE</span> <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Twitter / X Card -->
+                <div onclick="window.location.href='/social/twitter'" style="cursor: pointer; padding: 14px; background: rgba(2, 10, 18, 0.85); border: 1px solid rgba(0, 255, 209, 0.4); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--cyber-cyan)'; this.style.boxShadow='0 0 12px rgba(0,255,209,0.3)';" onmouseout="this.style.borderColor='rgba(0,255,209,0.4)'; this.style.boxShadow='none';">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-family: var(--cyber-font-orbitron); font-size: 13px; font-weight: bold; color: var(--cyber-cyan);"><i class="fab fa-twitter" style="margin-right: 6px;"></i> TWITTER / X INTELLIGENCE</span>
+                        <span style="font-size: 11px; padding: 2px 6px; background: rgba(0,255,209,0.15); color: var(--cyber-cyan); border: 1px solid rgba(0,255,209,0.3); border-radius: 2px;">NEURAL RECON</span>
+                    </div>
+                    <p style="font-family: var(--cyber-font-mono); font-size: 12px; color: rgba(255,255,255,0.7); margin: 0 0 8px 0; line-height: 1.4;">Real-time hashtag tracking, sentiment matrix, user influence graphs, and geospatial node mapping.</p>
+                    <div style="font-family: var(--cyber-font-mono); font-size: 11.5px; color: var(--cyber-cyan); display: flex; align-items: center; gap: 6px;">
+                        <span>LAUNCH WORKSPACE</span> <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> INTERNATIONAL</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        9 RSS / 3 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.reuters.com/rssFeed/worldNews" target="_blank" rel="noopener noreferrer">https://www.reuters.com/rssFeed/worldNews</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://apnews.com/hub/ap-top-news?rss=1" target="_blank" rel="noopener noreferrer">https://apnews.com/hub/ap-top-news?rss=1</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.aljazeera.com/xml/rss/all.xml" target="_blank" rel="noopener noreferrer">https://www.aljazeera.com/xml/rss/all.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://feeds.bbci.co.uk/news/world/rss.xml" target="_blank" rel="noopener noreferrer">https://feeds.bbci.co.uk/news/world/rss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.dw.com/en/top-stories/rss" target="_blank" rel="noopener noreferrer">https://www.dw.com/en/top-stories/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.france24.com/en/rss" target="_blank" rel="noopener noreferrer">https://www.france24.com/en/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://news.un.org/feed/subscribe/en/news/all/rss.xml" target="_blank" rel="noopener noreferrer">https://news.un.org/feed/subscribe/en/news/all/rss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://globalvoices.org/feed/" target="_blank" rel="noopener noreferrer">https://globalvoices.org/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://world.einnews.com/rss" target="_blank" rel="noopener noreferrer">https://world.einnews.com/rss</a>
+                    </li>
+                    
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://newsapi.org/v2/top-headlines" target="_blank" rel="noopener noreferrer">https://newsapi.org/v2/top-headlines</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://api.worldnewsapi.com/search-news" target="_blank" rel="noopener noreferrer">https://api.worldnewsapi.com/search-news</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://newsdata.io/api/1/news" target="_blank" rel="noopener noreferrer">https://newsdata.io/api/1/news</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> USA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        9 RSS / 1 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://rss.cnn.com/rss/edition.rss" target="_blank" rel="noopener noreferrer">https://rss.cnn.com/rss/edition.rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://feeds.nbcnews.com/nbcnews/public/news" target="_blank" rel="noopener noreferrer">https://feeds.nbcnews.com/nbcnews/public/news</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" target="_blank" rel="noopener noreferrer">https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://feeds.foxnews.com/foxnews/latest" target="_blank" rel="noopener noreferrer">https://feeds.foxnews.com/foxnews/latest</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://feeds.washingtonpost.com/rss/world" target="_blank" rel="noopener noreferrer">https://feeds.washingtonpost.com/rss/world</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://abcnews.go.com/abcnews/topstories" target="_blank" rel="noopener noreferrer">https://abcnews.go.com/abcnews/topstories</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.cbsnews.com/latest/rss/main" target="_blank" rel="noopener noreferrer">https://www.cbsnews.com/latest/rss/main</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.usatoday.com/rss/news/" target="_blank" rel="noopener noreferrer">https://www.usatoday.com/rss/news/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://apnews.com/apf-topnews?rss=1" target="_blank" rel="noopener noreferrer">https://apnews.com/apf-topnews?rss=1</a>
+                    </li>
+                    
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://newsapi.org/v2/top-headlines?country=us" target="_blank" rel="noopener noreferrer">https://newsapi.org/v2/top-headlines?country=us</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> INDIA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        9 RSS / 2 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://timesofindia.indiatimes.com/rssfeedstopstories.cms" target="_blank" rel="noopener noreferrer">https://timesofindia.indiatimes.com/rssfeedstopstories.cms</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.thehindu.com/news/national/feeder/default.rss" target="_blank" rel="noopener noreferrer">https://www.thehindu.com/news/national/feeder/default.rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml" target="_blank" rel="noopener noreferrer">https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://indianexpress.com/feed/" target="_blank" rel="noopener noreferrer">https://indianexpress.com/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://feeds.ndtv.com/ndtvnews-top-stories" target="_blank" rel="noopener noreferrer">https://feeds.ndtv.com/ndtvnews-top-stories</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://scroll.in/feed" target="_blank" rel="noopener noreferrer">https://scroll.in/feed</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://theprint.in/feed/" target="_blank" rel="noopener noreferrer">https://theprint.in/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://economictimes.indiatimes.com/rssfeedstopstories.cms" target="_blank" rel="noopener noreferrer">https://economictimes.indiatimes.com/rssfeedstopstories.cms</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.deccanherald.com/rss.xml" target="_blank" rel="noopener noreferrer">https://www.deccanherald.com/rss.xml</a>
+                    </li>
+                    
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://newsapi.org/v2/top-headlines?country=in" target="_blank" rel="noopener noreferrer">https://newsapi.org/v2/top-headlines?country=in</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://newsdata.io/api/1/news?country=in" target="_blank" rel="noopener noreferrer">https://newsdata.io/api/1/news?country=in</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> EUROPE</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        10 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://feeds.bbci.co.uk/news/world/europe/rss.xml" target="_blank" rel="noopener noreferrer">https://feeds.bbci.co.uk/news/world/europe/rss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.euronews.com/rss" target="_blank" rel="noopener noreferrer">https://www.euronews.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.theguardian.com/world/rss" target="_blank" rel="noopener noreferrer">https://www.theguardian.com/world/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.spiegel.de/international/index.rss" target="_blank" rel="noopener noreferrer">https://www.spiegel.de/international/index.rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.lemonde.fr/rss/une.xml" target="_blank" rel="noopener noreferrer">https://www.lemonde.fr/rss/une.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://elpais.com/rss/feed.html" target="_blank" rel="noopener noreferrer">https://elpais.com/rss/feed.html</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.repubblica.it/rss/homepage/rss2.0.xml" target="_blank" rel="noopener noreferrer">https://www.repubblica.it/rss/homepage/rss2.0.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.ft.com/rss/home" target="_blank" rel="noopener noreferrer">https://www.ft.com/rss/home</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.politico.eu/rss" target="_blank" rel="noopener noreferrer">https://www.politico.eu/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://rss.dw.com/xml/rss-en-eu" target="_blank" rel="noopener noreferrer">https://rss.dw.com/xml/rss-en-eu</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> AFRICA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        9 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf" target="_blank" rel="noopener noreferrer">https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.news24.com/rss" target="_blank" rel="noopener noreferrer">https://www.news24.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://nation.africa/kenya/rss" target="_blank" rel="noopener noreferrer">https://nation.africa/kenya/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://mg.co.za/feed/" target="_blank" rel="noopener noreferrer">https://mg.co.za/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.theafricareport.com/feed/" target="_blank" rel="noopener noreferrer">https://www.theafricareport.com/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.premiumtimesng.com/feed" target="_blank" rel="noopener noreferrer">https://www.premiumtimesng.com/feed</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.sabcnews.com/sabcnews/feed/" target="_blank" rel="noopener noreferrer">https://www.sabcnews.com/sabcnews/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.egyptindependent.com/feed/" target="_blank" rel="noopener noreferrer">https://www.egyptindependent.com/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.newtimes.co.rw/rss" target="_blank" rel="noopener noreferrer">https://www.newtimes.co.rw/rss</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> UAE</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 1 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://gulfnews.com/rss" target="_blank" rel="noopener noreferrer">https://gulfnews.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.khaleejtimes.com/rss" target="_blank" rel="noopener noreferrer">https://www.khaleejtimes.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.thenationalnews.com/rss" target="_blank" rel="noopener noreferrer">https://www.thenationalnews.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.arabianbusiness.com/rss" target="_blank" rel="noopener noreferrer">https://www.arabianbusiness.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.emirates247.com/rss" target="_blank" rel="noopener noreferrer">https://www.emirates247.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.albayan.ae/rss" target="_blank" rel="noopener noreferrer">https://www.albayan.ae/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.itihad.ae/rss" target="_blank" rel="noopener noreferrer">https://www.itihad.ae/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.zawya.com/rss" target="_blank" rel="noopener noreferrer">https://www.zawya.com/rss</a>
+                    </li>
+                    
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="https://newsapi.org/v2/top-headlines?country=ae" target="_blank" rel="noopener noreferrer">https://newsapi.org/v2/top-headlines?country=ae</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> IRAN</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.presstv.ir/rss" target="_blank" rel="noopener noreferrer">https://www.presstv.ir/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.tehrantimes.com/rss" target="_blank" rel="noopener noreferrer">https://www.tehrantimes.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.irna.ir/rss" target="_blank" rel="noopener noreferrer">https://www.irna.ir/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://en.mehrnews.com/rss" target="_blank" rel="noopener noreferrer">https://en.mehrnews.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.tasnimnews.com/en/rss" target="_blank" rel="noopener noreferrer">https://www.tasnimnews.com/en/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://farsnews.ir/rss" target="_blank" rel="noopener noreferrer">https://farsnews.ir/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.radiofarda.com/rss" target="_blank" rel="noopener noreferrer">https://www.radiofarda.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.isna.ir/rss" target="_blank" rel="noopener noreferrer">https://www.isna.ir/rss</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> CHINA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="http://www.xinhuanet.com/english/rss/worldrss.xml" target="_blank" rel="noopener noreferrer">http://www.xinhuanet.com/english/rss/worldrss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.chinadaily.com.cn/rss/world_rss.xml" target="_blank" rel="noopener noreferrer">https://www.chinadaily.com.cn/rss/world_rss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.globaltimes.cn/rss/world.xml" target="_blank" rel="noopener noreferrer">https://www.globaltimes.cn/rss/world.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.scmp.com/rss/91/feed" target="_blank" rel="noopener noreferrer">https://www.scmp.com/rss/91/feed</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://news.cgtn.com/rss" target="_blank" rel="noopener noreferrer">https://news.cgtn.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://english.people.com.cn/rss/World.xml" target="_blank" rel="noopener noreferrer">https://english.people.com.cn/rss/World.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.shine.cn/rss/" target="_blank" rel="noopener noreferrer">https://www.shine.cn/rss/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.beijingreview.com.cn/rss/" target="_blank" rel="noopener noreferrer">https://www.beijingreview.com.cn/rss/</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> RUSSIA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://tass.com/rss/v2.xml" target="_blank" rel="noopener noreferrer">https://tass.com/rss/v2.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://ria.ru/export/rss2/archive/index.xml" target="_blank" rel="noopener noreferrer">https://ria.ru/export/rss2/archive/index.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.interfax.ru/rss.asp" target="_blank" rel="noopener noreferrer">https://www.interfax.ru/rss.asp</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.themoscowtimes.com/rss" target="_blank" rel="noopener noreferrer">https://www.themoscowtimes.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.rt.com/rss/news/" target="_blank" rel="noopener noreferrer">https://www.rt.com/rss/news/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.kommersant.ru/RSS/news.xml" target="_blank" rel="noopener noreferrer">https://www.kommersant.ru/RSS/news.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://novayagazeta.eu/rss" target="_blank" rel="noopener noreferrer">https://novayagazeta.eu/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.vedomosti.ru/rss/news" target="_blank" rel="noopener noreferrer">https://www.vedomosti.ru/rss/news</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> JAPAN</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www3.nhk.or.jp/rss/news/cat0.xml" target="_blank" rel="noopener noreferrer">https://www3.nhk.or.jp/rss/news/cat0.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.japantimes.co.jp/feed/" target="_blank" rel="noopener noreferrer">https://www.japantimes.co.jp/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.asahi.com/rss/asahi/newsheadlines.rdf" target="_blank" rel="noopener noreferrer">https://www.asahi.com/rss/asahi/newsheadlines.rdf</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.yomiuri.co.jp/rss/world.xml" target="_blank" rel="noopener noreferrer">https://www.yomiuri.co.jp/rss/world.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://mainichi.jp/rss/etc/mainichi-flash.rss" target="_blank" rel="noopener noreferrer">https://mainichi.jp/rss/etc/mainichi-flash.rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://english.kyodonews.net/rss/news.xml" target="_blank" rel="noopener noreferrer">https://english.kyodonews.net/rss/news.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://asia.nikkei.com/rss/feed/nar" target="_blank" rel="noopener noreferrer">https://asia.nikkei.com/rss/feed/nar</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://japantoday.com/feed" target="_blank" rel="noopener noreferrer">https://japantoday.com/feed</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> AUSTRALIA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.abc.net.au/news/feed/51120/rss.xml" target="_blank" rel="noopener noreferrer">https://www.abc.net.au/news/feed/51120/rss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.theaustralian.com.au/rss" target="_blank" rel="noopener noreferrer">https://www.theaustralian.com.au/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.smh.com.au/rss/feed.xml" target="_blank" rel="noopener noreferrer">https://www.smh.com.au/rss/feed.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.theguardian.com/au/rss" target="_blank" rel="noopener noreferrer">https://www.theguardian.com/au/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.news.com.au/rss" target="_blank" rel="noopener noreferrer">https://www.news.com.au/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.theage.com.au/rss/feed.xml" target="_blank" rel="noopener noreferrer">https://www.theage.com.au/rss/feed.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.afr.com/rss" target="_blank" rel="noopener noreferrer">https://www.afr.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.sbs.com.au/news/feed" target="_blank" rel="noopener noreferrer">https://www.sbs.com.au/news/feed</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> TAIWAN</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.taipeitimes.com/xml/rss" target="_blank" rel="noopener noreferrer">https://www.taipeitimes.com/xml/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://focustaiwan.tw/rss" target="_blank" rel="noopener noreferrer">https://focustaiwan.tw/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.chinapost.com.tw/rss" target="_blank" rel="noopener noreferrer">https://www.chinapost.com.tw/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://news.ltn.com.tw/rss" target="_blank" rel="noopener noreferrer">https://news.ltn.com.tw/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://udn.com/rssfeed/news/2/6638" target="_blank" rel="noopener noreferrer">https://udn.com/rssfeed/news/2/6638</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.ettoday.net/news/rss_all.xml" target="_blank" rel="noopener noreferrer">https://www.ettoday.net/news/rss_all.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://news.tvbs.com.tw/rss" target="_blank" rel="noopener noreferrer">https://news.tvbs.com.tw/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.storm.mg/feeds" target="_blank" rel="noopener noreferrer">https://www.storm.mg/feeds</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> SOUTH_KOREA</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        8 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://en.yna.co.kr/rss/news.xml" target="_blank" rel="noopener noreferrer">https://en.yna.co.kr/rss/news.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.koreaherald.com/rss" target="_blank" rel="noopener noreferrer">https://www.koreaherald.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.koreatimes.co.kr/www/rss/rss.xml" target="_blank" rel="noopener noreferrer">https://www.koreatimes.co.kr/www/rss/rss.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.arirang.com/rss/news.xml" target="_blank" rel="noopener noreferrer">https://www.arirang.com/rss/news.xml</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://world.kbs.co.kr/rss/rss_news.htm" target="_blank" rel="noopener noreferrer">https://world.kbs.co.kr/rss/rss_news.htm</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://koreajoongangdaily.joins.com/rss" target="_blank" rel="noopener noreferrer">https://koreajoongangdaily.joins.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.chosun.com/arc/outboundfeeds/rss/" target="_blank" rel="noopener noreferrer">https://www.chosun.com/arc/outboundfeeds/rss/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.hani.co.kr/rss/" target="_blank" rel="noopener noreferrer">https://www.hani.co.kr/rss/</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> ISRAEL</span>
+                    <span style="font-size: 12px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        9 RSS / 0 API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.haaretz.com/rss" target="_blank" rel="noopener noreferrer">https://www.haaretz.com/rss</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.jpost.com/rss/rssfeedsfrontpage.aspx" target="_blank" rel="noopener noreferrer">https://www.jpost.com/rss/rssfeedsfrontpage.aspx</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.timesofisrael.com/feed/" target="_blank" rel="noopener noreferrer">https://www.timesofisrael.com/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.ynetnews.com/category/3082" target="_blank" rel="noopener noreferrer">https://www.ynetnews.com/category/3082</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.themarker.com/cmlink/1.144" target="_blank" rel="noopener noreferrer">https://www.themarker.com/cmlink/1.144</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.israelhayom.com/feed/" target="_blank" rel="noopener noreferrer">https://www.israelhayom.com/feed/</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.inn.co.il/Rss.aspx" target="_blank" rel="noopener noreferrer">https://www.inn.co.il/Rss.aspx</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode" target="_blank" rel="noopener noreferrer">https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode</a>
+                    </li>
+                    
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="https://www.i24news.tv/en/rss" target="_blank" rel="noopener noreferrer">https://www.i24news.tv/en/rss</a>
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- UTC Timestamp updater -->
+    <script>
+        function updateTimestamp() {
+            const now = new Date();
+            const ts = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
+            const el = document.getElementById('argus-timestamp');
+            if (el) el.textContent = 'REC ' + ts;
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+    </script>
+
+    <!-- Markdown & LaTeX Vendor Libraries -->
+    <script src="/static/vendor/marked.min.js"></script>
+    <script src="/static/vendor/katex.min.js"></script>
+    <script src="/static/vendor/auto-render.min.js"></script>
+
+    <!-- Universal Tactical ARGUS AI Core Script -->
+    <script src="/static/js/argus-ai.js"></script>
+</body>
+</html>

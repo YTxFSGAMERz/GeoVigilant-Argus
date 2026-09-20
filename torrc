@@ -1,0 +1,15 @@
+## GeoVigilant Argus Eye - Tor Configuration
+## SOCKS5 Proxy & Circuit Controller
+
+SocksPort 9050
+ControlPort 9051
+CookieAuthentication 1
+
+## Data and GeoIP paths
+DataDirectory tor-expert-bundle-windows-i686-15.0.19/data/tor
+GeoIPFile tor-expert-bundle-windows-i686-15.0.19/data/geoip
+GeoIPv6File tor-expert-bundle-windows-i686-15.0.19/data/geoip6
+
+## Performance and logging
+AvoidDiskWrites 1
+Log notice stdout

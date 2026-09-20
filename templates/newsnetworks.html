@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoVigilant — News Networks</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts: Orbitron + Share Tech Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/argus-ai.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/katex.min.css') }}">
+    <link rel="stylesheet" href="/static/css/argus-kiosk.css">
+    <script src="/static/js/argus-kiosk.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--cyber-bg);
+            color: var(--cyber-cyan);
+            font-family: var(--cyber-font-mono);
+            min-height: 100vh;
+        }
+
+        .networks-container {
+            padding: 24px 28px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-banner {
+            background: rgba(2, 14, 20, 0.9);
+            border: 1px solid var(--cyber-border);
+            border-left: 3px solid var(--cyber-amber);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-banner h1 {
+            margin: 0;
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #FFF;
+            font-family: var(--cyber-font-orbitron);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-banner p {
+            margin: 4px 0 0 0;
+            font-size: 14px;
+            color: rgba(0, 255, 209, 0.5);
+            letter-spacing: 0.5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+        }
+
+        .region-card {
+            background: rgba(2, 14, 20, 0.85);
+            border: 1px solid var(--cyber-border);
+            padding: 14px;
+            position: relative;
+            transition: 0.2s ease;
+        }
+
+        .region-card:hover {
+            border-color: var(--cyber-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 209, 0.15);
+        }
+
+        .region-title {
+            font-size: 14px;
+            font-family: var(--cyber-font-orbitron);
+            color: var(--cyber-amber);
+            border-bottom: 1px solid rgba(255, 204, 0, 0.2);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 1px;
+        }
+
+        .feed-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .feed-item {
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(0, 255, 209, 0.1);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            word-break: break-all;
+        }
+
+        .feed-item a {
+            color: rgba(0, 255, 209, 0.75);
+            text-decoration: none;
+            transition: 0.15s;
+        }
+
+        .feed-item a:hover {
+            color: #FFF;
+            text-shadow: 0 0 8px var(--cyber-cyan);
+        }
+
+        .feed-tag {
+            font-size: 13px;
+            padding: 2px 6px;
+            background: rgba(0, 255, 209, 0.1);
+            border: 1px solid var(--cyber-border);
+            color: var(--cyber-cyan);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .feed-tag.api {
+            background: rgba(255, 204, 0, 0.1);
+            border-color: rgba(255, 204, 0, 0.4);
+            color: var(--cyber-amber);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TACTICAL CLASSIFICATION HEADER -->
+    <header class="argus-header">
+        <div class="header-left">TOP SECRET // SI-TK // NOFORN</div>
+        <div class="header-center">
+            <span class="argus-logo-dot"></span>
+            <span style="font-family: var(--cyber-font-orbitron); font-size: 14px;">ARGUS</span>
+            <span style="color: rgba(0,255,209,0.4); font-size: 14px;">&#9673;</span>
+            <span style="color: var(--cyber-amber); font-size: 14px; letter-spacing: 1px;">NEWS NETWORKS</span>
+            <span style="color: rgba(0,255,209,0.5); font-size: 13.5px;">// INTEL AGGREGATION REGISTRY</span>
+            <button class="argus-nav-btn" onclick="window.location.href='/'"><i class="fas fa-home"></i> OVERVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/earth'"><i class="fas fa-globe"></i> 3D GLOBE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/ground'"><i class="fas fa-map"></i> GROUNDVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/surveillance'"><i class="fas fa-wifi"></i> SURVEILLANCE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/news'"><i class="fas fa-satellite-dish"></i> NEWS STREAM</button>
+            <button class="argus-nav-btn active" onclick="window.location.href='/newsnetworks'"><i class="fas fa-broadcast-tower"></i> NETWORKS</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/social/reddit'"><i class="fab fa-reddit"></i> REDDIT</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/social/twitter'"><i class="fab fa-twitter"></i> TWITTER</button>
+            <button class="argus-nav-btn open-argus-ai" id="btn-argus-core" style="color: var(--cyber-cyan); border-color: var(--cyber-cyan); font-weight: bold; background: rgba(0,255,209,0.14); cursor: pointer;" title="Open ARGUS AI Tactical Assistant"><i class="fas fa-shield-alt"></i> ARGUS CORE</button>
+        </div>
+        <div class="header-right">
+            <span class="argus-online-badge">&#9679; ONLINE</span>
+            <span id="argus-timestamp">REC 0000-00-00 00:00:00Z</span>
+        </div>
+    </header>
+
+    <div class="networks-container">
+        <div class="page-banner">
+            <div>
+                <h1><i class="fas fa-satellite" style="color: var(--cyber-amber);"></i> GLOBAL NEWS NETWORK REGISTRY</h1>
+                <p>ACTIVE GEO-INTELLIGENCE FEEDS &amp; RSS AGGREGATION MATRIX</p>
+            </div>
+            <div style="font-size: 14px; color: var(--cyber-cyan);">
+                <i class="fas fa-sync fa-spin"></i> MULTI-SOURCE FEED ACTIVE
+            </div>
+        </div>
+
+        <!-- SPECIALIZED SOCIAL OSINT WORKSTATIONS -->
+        <div style="margin-bottom: 24px; padding: 16px 20px; background: rgba(0, 255, 209, 0.04); border: 1px solid rgba(0, 255, 209, 0.25); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(0, 255, 209, 0.15); padding-bottom: 8px;">
+                <div style="font-family: var(--cyber-font-orbitron); font-size: 13px; font-weight: bold; color: var(--cyber-amber); letter-spacing: 1px;">
+                    <i class="fas fa-users-viewfinder" style="margin-right: 6px;"></i> SPECIALIZED SOCIAL OSINT WORKSTATIONS
+                </div>
+                <span style="font-family: var(--cyber-font-mono); font-size: 12px; color: #00FF88;">● OPERATIONAL RECON MESH</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <!-- Reddit Card -->
+                <div onclick="window.location.href='/social/reddit'" style="cursor: pointer; padding: 14px; background: rgba(2, 10, 18, 0.85); border: 1px solid rgba(255, 69, 0, 0.4); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.borderColor='#FF4500'; this.style.boxShadow='0 0 12px rgba(255,69,0,0.3)';" onmouseout="this.style.borderColor='rgba(255,69,0,0.4)'; this.style.boxShadow='none';">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-family: var(--cyber-font-orbitron); font-size: 13px; font-weight: bold; color: #FF4500;"><i class="fab fa-reddit" style="margin-right: 6px;"></i> REDDIT OSINT MESH</span>
+                        <span style="font-size: 11px; padding: 2px 6px; background: rgba(255,69,0,0.15); color: #FF4500; border: 1px solid rgba(255,69,0,0.3); border-radius: 2px;">LIVE INTEL</span>
+                    </div>
+                    <p style="font-family: var(--cyber-font-mono); font-size: 12px; color: rgba(255,255,255,0.7); margin: 0 0 8px 0; line-height: 1.4;">Community sentiment analysis, sub-reddit entity network graphs, and automated intelligence reporting.</p>
+                    <div style="font-family: var(--cyber-font-mono); font-size: 11.5px; color: var(--cyber-cyan); display: flex; align-items: center; gap: 6px;">
+                        <span>LAUNCH WORKSPACE</span> <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Twitter / X Card -->
+                <div onclick="window.location.href='/social/twitter'" style="cursor: pointer; padding: 14px; background: rgba(2, 10, 18, 0.85); border: 1px solid rgba(0, 255, 209, 0.4); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--cyber-cyan)'; this.style.boxShadow='0 0 12px rgba(0,255,209,0.3)';" onmouseout="this.style.borderColor='rgba(0,255,209,0.4)'; this.style.boxShadow='none';">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-family: var(--cyber-font-orbitron); font-size: 13px; font-weight: bold; color: var(--cyber-cyan);"><i class="fab fa-twitter" style="margin-right: 6px;"></i> TWITTER / X INTELLIGENCE</span>
+                        <span style="font-size: 11px; padding: 2px 6px; background: rgba(0,255,209,0.15); color: var(--cyber-cyan); border: 1px solid rgba(0,255,209,0.3); border-radius: 2px;">NEURAL RECON</span>
+                    </div>
+                    <p style="font-family: var(--cyber-font-mono); font-size: 12px; color: rgba(255,255,255,0.7); margin: 0 0 8px 0; line-height: 1.4;">Real-time hashtag tracking, sentiment matrix, user influence graphs, and geospatial node mapping.</p>
+                    <div style="font-family: var(--cyber-font-mono); font-size: 11.5px; color: var(--cyber-cyan); display: flex; align-items: center; gap: 6px;">
+                        <span>LAUNCH WORKSPACE</span> <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            {% for region, feeds in sources.items() %}
+            <div class="region-card">
+                <div class="region-title">
+                    <span><i class="fas fa-broadcast-tower"></i> {{ region }}</span>
+                    <span style="font-size: 13.5px; color: var(--cyber-cyan); font-family: var(--cyber-font-mono);">
+                        {{ feeds.get('rss', [])|length }} RSS / {{ feeds.get('api', [])|length }} API
+                    </span>
+                </div>
+                <ul class="feed-list">
+                    {% for feed in feeds.get('rss', []) %}
+                    <li class="feed-item">
+                        <span class="feed-tag">RSS</span>
+                        <a href="{{ feed }}" target="_blank" rel="noopener noreferrer">{{ feed }}</a>
+                    </li>
+                    {% endfor %}
+                    {% for api in feeds.get('api', []) %}
+                    <li class="feed-item">
+                        <span class="feed-tag api">API</span>
+                        <a href="{{ api }}" target="_blank" rel="noopener noreferrer">{{ api }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- UTC Timestamp updater -->
+    <script>
+        function updateTimestamp() {
+            const now = new Date();
+            const ts = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
+            const el = document.getElementById('argus-timestamp');
+            if (el) el.textContent = 'REC ' + ts;
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+    </script>
+
+    <!-- Markdown & LaTeX Vendor Libraries -->
+    <script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/katex.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/auto-render.min.js') }}"></script>
+
+    <!-- Universal Tactical ARGUS AI Core Script -->
+    <script src="{{ url_for('static', filename='js/argus-ai.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+tor-expert-bundle*
+geosent_chroma_db
+geosent.db
+geodata
+images
+.git
+.gemini
+__pycache__
+*.pyc
+node_modules
+scratch
+*.exe
+index.html
+news.html
+wifi-search.html
+

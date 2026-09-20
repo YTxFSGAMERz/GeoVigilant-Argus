@@ -1,0 +1,9 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts must always use LF line endings for POSIX compatibility
+*.sh text eol=lf
+
+# Windows batch files must use CRLF line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf

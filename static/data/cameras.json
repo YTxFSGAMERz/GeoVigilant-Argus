@@ -1,0 +1,122 @@
+[
+  {
+    "id": "dot-cam-001",
+    "name": "Times Square - 7th Ave & 42nd St",
+    "road": "Broadway & 7th Ave",
+    "city": "New York, NY",
+    "country": "USA",
+    "lat": 40.7580,
+    "lng": -73.9855,
+    "stream": "https://www.earthcam.com/usa/newyork/timessquare/?cam=tsrobo1",
+    "status": "LIVE",
+    "source": "NYC DOT Surveillance"
+  },
+  {
+    "id": "dot-cam-002",
+    "name": "Brooklyn Bridge - Manhattan Tower",
+    "road": "I-278 / FDR Drive",
+    "city": "New York, NY",
+    "country": "USA",
+    "lat": 40.7061,
+    "lng": -73.9969,
+    "stream": "https://webcams.nyctmc.org",
+    "status": "LIVE",
+    "source": "NY State DOT"
+  },
+  {
+    "id": "dot-cam-003",
+    "name": "Hollywood & Highland Junction",
+    "road": "Hollywood Blvd",
+    "city": "Los Angeles, CA",
+    "country": "USA",
+    "lat": 34.1016,
+    "lng": -118.3400,
+    "stream": "http://cwwp2.dot.ca.gov/vm/streamlist.htm",
+    "status": "LIVE",
+    "source": "Caltrans District 7"
+  },
+  {
+    "id": "dot-cam-004",
+    "name": "Bay Bridge - Toll Plaza Overlook",
+    "road": "I-80 Westbound",
+    "city": "San Francisco, CA",
+    "country": "USA",
+    "lat": 37.8199,
+    "lng": -122.3783,
+    "stream": "http://cwwp2.dot.ca.gov/vm/streamlist.htm",
+    "status": "LIVE",
+    "source": "Caltrans District 4"
+  },
+  {
+    "id": "dot-cam-005",
+    "name": "Michigan Ave & Wacker Dr Bridge",
+    "road": "DuSable Bridge",
+    "city": "Chicago, IL",
+    "country": "USA",
+    "lat": 41.8888,
+    "lng": -87.6247,
+    "stream": "https://www.travelmidwest.com",
+    "status": "LIVE",
+    "source": "Illinois DOT"
+  },
+  {
+    "id": "dot-cam-006",
+    "name": "Trafalgar Square North Terrace",
+    "road": "A4 / Strand",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5080,
+    "lng": -0.1281,
+    "stream": "https://tfl.gov.uk/traffic/status",
+    "status": "LIVE",
+    "source": "Transport for London JamCams"
+  },
+  {
+    "id": "dot-cam-007",
+    "name": "Tower Bridge North Approach",
+    "road": "A100 Tower Bridge Rd",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5055,
+    "lng": -0.0754,
+    "stream": "https://tfl.gov.uk/traffic/status",
+    "status": "LIVE",
+    "source": "Transport for London JamCams"
+  },
+  {
+    "id": "dot-cam-008",
+    "name": "Shibuya Crossing Main Intersection",
+    "road": "Hachiko Crossing",
+    "city": "Tokyo",
+    "country": "Japan",
+    "lat": 35.6595,
+    "lng": 139.7004,
+    "stream": "https://www.youtube.com/watch?v=dfVk2E_2a5k",
+    "status": "LIVE",
+    "source": "Tokyo Metropolitan Police Dept"
+  },
+  {
+    "id": "dot-cam-009",
+    "name": "Champs-Élysées / Arc de Triomphe",
+    "road": "Place Charles de Gaulle",
+    "city": "Paris",
+    "country": "France",
+    "lat": 48.8738,
+    "lng": 2.2950,
+    "stream": "https://www.paris.fr/circulation",
+    "status": "LIVE",
+    "source": "Direction de la Voirie et des Déplacements"
+  },
+  {
+    "id": "dot-cam-010",
+    "name": "Sydney Harbour Bridge South Pylon",
+    "road": "Bradfield Hwy",
+    "city": "Sydney",
+    "country": "Australia",
+    "lat": -33.8523,
+    "lng": 151.2108,
+    "stream": "https://livetraffic.com",
+    "status": "LIVE",
+    "source": "Live Traffic NSW"
+  }
+]

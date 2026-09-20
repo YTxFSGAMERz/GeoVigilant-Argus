@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ARGUS GroundView // 2D Ground Intel</title>
+
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺</text></svg>" />
+
+    <!-- MapLibre GL JS CSS — served locally to match v6.4.1 JS bundle exactly -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/maplibre-gl.css') }}">
+
+    <!-- ARGUS Cyberpunk theme tokens (shared with 3D globe) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/argus-ai.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/katex.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- GroundView-specific layout & HUD styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/groundview.css') }}">
+    <link rel="stylesheet" href="/static/css/argus-kiosk.css">
+    <script src="/static/js/argus-kiosk.js"></script>
+
+    <!-- Google Fonts: Orbitron (display) + Share Tech Mono (mono) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <!-- NOTE: Cesium.js is NOT loaded on this page. Isolation guaranteed. -->
+    <!-- NOTE: maplibre-gl is NOT loaded here. It lazy-loads via groundview-main.js. -->
+</head>
+
+<body>
+<div id="groundview-root">
+
+    <!-- ╔═══════════════════════════════════════════════════════════════╗ -->
+    <!-- ║  CLASSIFICATION HEADER                                        ║ -->
+    <!-- ╚═══════════════════════════════════════════════════════════════╝ -->
+    <header id="gv-header">
+        <div class="header-left">TOP SECRET // SI-TK // NOFORN</div>
+
+        <div class="header-center">
+            <span class="gv-logo-dot"></span>
+            <span>ARGUS</span>
+            <span style="color: rgba(0,255,209,0.4); font-size: 14px; letter-spacing: 1px;">◉</span>
+            <span style="color: #FFCC00;">GROUNDVIEW</span>
+            <span style="color: rgba(0,255,209,0.3); font-size: 13.5px; font-weight: normal; letter-spacing: 0;">// 2D GROUND INTEL</span>
+            <button class="gv-header-btn" onclick="window.location.href='/'" style="margin-left: 12px;" title="Overview">🏠 OVERVIEW</button>
+            <button class="gv-header-btn" onclick="window.location.href='/earth'" style="color: var(--cyber-cyan, #00FFD1);" title="Launch 3D Globe HUD">🌍 3D GLOBE</button>
+            <button class="gv-header-btn" onclick="window.location.href='/news'" title="Open News Stream">📺 NEWS</button>
+            <button class="gv-header-btn" onclick="window.location.href='/surveillance'" title="Open RF Surveillance">📶 SURVEILLANCE</button>
+            <button class="gv-header-btn" onclick="window.location.href='/newsnetworks'" title="Open Networks">🌐 NETWORKS</button>
+            <button class="gv-header-btn" id="btn-visual-search" style="color: #FFD700; border: 1px solid rgba(255,215,0,0.6); background: rgba(255,215,0,0.12); font-weight: bold;" title="OSINT Reverse Image Geolocation via pHash BK-Tree">
+                🔍 VISUAL SEARCH
+            </button>
+            <button class="gv-header-btn open-argus-ai" id="btn-argus-core" style="color: var(--cyber-cyan, #00FFD1); border: 1px solid var(--cyber-cyan, #00FFD1); font-weight: bold; background: rgba(0,255,209,0.15); cursor: pointer;" title="Open ARGUS AI Tactical Assistant">
+                🛡 ARGUS CORE
+            </button>
+        </div>
+
+        <div class="header-right">
+            <span id="gv-online-badge">● ONLINE</span>
+            <span id="gv-timestamp">REC 0000-00-00 00:00:00Z</span>
+            <button class="gv-header-btn back" id="btn-back-to-globe" onclick="window.location.href='/earth'" title="Return to 3D Globe">
+                ⬅ 3D GLOBE
+            </button>
+        </div>
+    </header>
+
+    <!-- ╔═══════════════════════════════════════════════════════════════╗ -->
+    <!-- ║  MAIN CONTENT                                                 ║ -->
+    <!-- ╚═══════════════════════════════════════════════════════════════╝ -->
+    <div id="gv-content">
+
+        <!-- ─── SIDEBAR ──────────────────────────────────────────────── -->
+        <aside id="gv-sidebar">
+
+            <!-- INTELLIGENCE LAYERS -->
+            <div class="gv-sidebar-section">
+                <h3>INTELLIGENCE LAYERS</h3>
+
+                <div class="gv-layer-row">
+                    <label for="toggle-landmarks">
+                        <input type="checkbox" id="toggle-landmarks" checked>
+                        <span style="color: #FFD700; font-weight: bold;">🏛️ ARGUS LANDMARKS // 3.8K</span>
+                    </label>
+                </div>
+
+                <div style="margin: 4px 0 8px 0;">
+                    <select id="argus-category-filter" style="width: 100%; background: #071018; color: #FFD700; border: 1px solid rgba(255,215,0,0.3); padding: 5px 8px; font-family: 'Share Tech Mono', monospace; font-size: 13.5px; border-radius: 2px; outline: none; cursor: pointer;">
+                        <option value="ALL">🏛️ ALL CATEGORIES (3.8K)</option>
+                    </select>
+                </div>
+
+                <div class="gv-layer-row">
+                    <label for="toggle-nodes">
+                        <input type="checkbox" id="toggle-nodes" checked>
+                        <span>📡 ARGUS NODES</span>
+                    </label>
+                </div>
+
+                <div class="gv-layer-row">
+                    <label for="toggle-incidents">
+                        <input type="checkbox" id="toggle-incidents" checked>
+                        <span>🔴 ACTIVE INCIDENTS</span>
+                    </label>
+                </div>
+
+                <div class="gv-layer-row">
+                    <label for="toggle-anomalies">
+                        <input type="checkbox" id="toggle-anomalies" checked>
+                        <span>⚠ ANOMALY ZONES</span>
+                    </label>
+                </div>
+
+                <div class="gv-layer-row">
+                    <label for="toggle-streetscapes">
+                        <input type="checkbox" id="toggle-streetscapes">
+                        <span style="color: #00f0ff;">📷 GLOBAL STREETSCAPES // 10K</span>
+                    </label>
+                </div>
+
+                <div class="gv-layer-row">
+                    <label for="toggle-mapillary">
+                        <input type="checkbox" id="toggle-mapillary">
+                        <span style="color: #1DB954;">🌐 MAPILLARY COVERAGE</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- BASEMAP -->
+            <div class="gv-sidebar-section">
+                <h3>BASEMAP</h3>
+                <div class="gv-basemap-grid-3">
+                    <button class="gv-basemap-btn active" id="basemap-tactical" title="Tactical Dark Matter">
+                        🌑 TACTICAL
+                    </button>
+                    <button class="gv-basemap-btn" id="basemap-streets" title="OpenStreetMap Voyager">
+                        🗺 STREETS
+                    </button>
+                    <button class="gv-basemap-btn" id="basemap-satellite" title="ESRI High-Res Satellite">
+                        🛰 SATELLITE
+                    </button>
+                </div>
+            </div>
+
+            <!-- SENSOR MESH STATUS -->
+            <div class="gv-sidebar-section">
+                <h3>SENSOR GRID</h3>
+                <div class="gv-stage-badge" id="gv-stage-badge" style="border-color: rgba(0,255,209,0.5); color: #00FFD1;">GRID ONLINE</div>
+                <div class="gv-scenario-btns">
+                    <button class="gv-scenario-btn step" id="gv-btn-step" title="Scan live OpenCellID & OSM telemetry">⚡ SCAN GRID</button>
+                    <button class="gv-scenario-btn reset" id="gv-btn-reset" title="Sync telemetry cache">↺ SYNC MESH</button>
+                </div>
+                <div style="margin-top: 6px; font-size: 13.5px; color: rgba(0,255,209,0.35); line-height: 1.5;">
+                    Real-time cryptographic telemetry: 3.8K verified landmarks, 10K streetscapes, OpenCellID towers & OSM sensors.
+                </div>
+            </div>
+
+            <!-- NODE LEGEND -->
+            <div class="gv-sidebar-section">
+                <h3>NODE LEGEND</h3>
+                <div style="font-size: 13.5px; line-height: 1.9; color: rgba(0,255,209,0.6);">
+                    <div><span style="color:#00FFD1;">●</span> TRUST ≥ 75% — HEALTHY</div>
+                    <div><span style="color:#FFCC00;">●</span> TRUST ≥ 45% — DEGRADED</div>
+                    <div><span style="color:#FF0055;">●</span> TRUST &lt; 45% — COMPROMISED</div>
+                    <div><span style="color:#BC13FE;">●</span> QUARANTINED</div>
+                    <div><span style="color:#FFCC00;">◎</span> ANOMALY HALO</div>
+                    <div><span style="color:#FF0055;">●</span> ACTIVE INCIDENT</div>
+                    <div><span style="color:#1DB954;">●</span> MAPILLARY IMAGE</div>
+                </div>
+            </div>
+
+            <!-- GROUND INTELLIGENCE -->
+            <div class="gv-sidebar-section" style="flex:1;">
+                <h3>GROUND INTEL</h3>
+                <div style="font-size: 13.5px; color: rgba(0,255,209,0.4); line-height: 1.6;">
+                    Click any marker to investigate.<br>
+                    ARGUS nodes update every 2s.<br>
+                    Mapillary: enable layer for
+                    street-level coverage.
+                </div>
+                <div style="margin-top: 8px; font-size: 13px; color: rgba(0,255,209,0.25); line-height: 1.5;">
+                    DEPLOYMENT AREA<br>
+                    SAN FRANCISCO BAY AREA<br>
+                    37.7749°N 122.4194°W
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ─── MAP AREA ──────────────────────────────────────────────── -->
+        <div id="gv-map-area">
+            <!-- HUD Corner brackets -->
+            <div class="gv-corner gv-corner-tl"></div>
+            <div class="gv-corner gv-corner-tr"></div>
+            <div class="gv-corner gv-corner-bl"></div>
+            <div class="gv-corner gv-corner-br"></div>
+
+            <!-- Map loading overlay (hidden once map.load fires) -->
+            <div id="gv-map-loading">
+                <div class="gv-loading-spinner"></div>
+                <span>INITIALIZING GROUNDVIEW ENGINE...</span>
+                <span style="font-size: 13.5px; color: rgba(0,255,209,0.4); font-family: monospace;">
+                    LOADING MAPLIBRE // ARGUS PIPELINE CONNECTING
+                </span>
+            </div>
+
+            <!-- MapLibre GL JS renders into this div -->
+            <div id="groundview-map"></div>
+
+            <!-- ─── Investigation / Intel Panel (floating, right side) ── -->
+            <div id="gv-intel-panel" class="hidden">
+                <div class="gv-intel-header">
+                    <span id="gv-intel-title">TARGET ACQUIRED</span>
+                    <button id="gv-intel-close">[X]</button>
+                </div>
+                <div id="gv-intel-content">
+                    <div style="color: rgba(0,255,209,0.4); font-size: 14px; padding: 10px 0;">
+                        Select a node or incident to investigate.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Visual Intelligence HUD Modal (Global Streetscapes 10k) ── -->
+            <div id="gv-streetscapes-modal" class="hidden">
+                <div class="gv-svi-hud">
+                    <div class="gv-svi-header">
+                        <div class="gv-svi-title">
+                            <span class="gv-svi-live-dot"></span>
+                            <span id="gv-svi-id">ARGUS VISUAL SENSOR // SVI-0000</span>
+                        </div>
+                        <button id="gv-svi-close" class="gv-svi-close-btn">[X]</button>
+                    </div>
+
+                    <div class="gv-svi-viewport-container">
+                        <div class="gv-svi-scanline"></div>
+                        <img id="gv-svi-image" src="" alt="Streetscape Observation" class="gv-svi-image" />
+                        <div class="gv-svi-crosshair-overlay">
+                            <div class="gv-ch-tl"></div>
+                            <div class="gv-ch-tr"></div>
+                            <div class="gv-ch-bl"></div>
+                            <div class="gv-ch-br"></div>
+                            <div class="gv-ch-center"></div>
+                        </div>
+                    </div>
+
+                    <div class="gv-svi-telemetry">
+                        <div class="gv-svi-grid">
+                            <div class="gv-svi-stat">
+                                <span class="gv-svi-label">LATITUDE</span>
+                                <span class="gv-svi-val" id="gv-svi-lat">0.000000°</span>
+                            </div>
+                            <div class="gv-svi-stat">
+                                <span class="gv-svi-label">LONGITUDE</span>
+                                <span class="gv-svi-val" id="gv-svi-lon">0.000000°</span>
+                            </div>
+                            <div class="gv-svi-stat">
+                                <span class="gv-svi-label">ENVIRONMENT</span>
+                                <span class="gv-svi-val" id="gv-svi-lighting">DAYLIGHT</span>
+                            </div>
+                            <div class="gv-svi-stat">
+                                <span class="gv-svi-label">WEATHER</span>
+                                <span class="gv-svi-val" id="gv-svi-weather">CLEAR</span>
+                            </div>
+                            <div class="gv-svi-stat">
+                                <span class="gv-svi-label">PLATFORM</span>
+                                <span class="gv-svi-val" id="gv-svi-platform">STREET LEVEL</span>
+                            </div>
+                            <div class="gv-svi-stat">
+                                <span class="gv-svi-label">FEED QUALITY</span>
+                                <span class="gv-svi-val" id="gv-svi-quality">HD // OPTICAL</span>
+                            </div>
+                        </div>
+
+                        <div class="gv-svi-actions">
+                            <button id="gv-svi-fly" class="gv-svi-btn">🎯 FLY TO</button>
+                            <button id="gv-svi-scan" class="gv-svi-btn primary">⚡ SCAN PIPELINE</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Landmark Ground Truth Gallery Modal (ARGUS 74k+ Assets) ─ -->
+            <div id="gv-landmark-modal" class="hidden">
+                <div class="gv-lm-header">
+                    <div class="gv-lm-title">
+                        <span>🏛️</span>
+                        <span id="gv-landmark-name">LANDMARK TARGET</span>
+                        <span class="gv-lm-badge" id="gv-landmark-category">MONUMENT</span>
+                    </div>
+                    <button id="gv-landmark-close" class="gv-lm-close">[X]</button>
+                </div>
+
+                <div class="gv-lm-viewport" id="gv-landmark-viewport">
+                    <button id="gv-lm-prev-btn" class="gv-lm-nav-btn prev" title="Previous photo (← or wheel up)">‹</button>
+                    <img id="gv-landmark-main-img" src="" alt="Landmark Main View" draggable="false" />
+                    <button id="gv-lm-next-btn" class="gv-lm-nav-btn next" title="Next photo (→ or wheel down)">›</button>
+                    <span id="gv-lm-counter" class="gv-lm-counter">1 / 1</span>
+                </div>
+
+                <!-- Multi-Angle Thumbnail Carousel -->
+                <div class="gv-lm-gallery" id="gv-landmark-gallery">
+                    <!-- Dynamic Thumbnails inserted by JS -->
+                </div>
+
+                <div class="gv-lm-telemetry">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <div>
+                            <span style="color:rgba(255,215,0,0.6); font-size: 13.5px;">LOCATION:</span>
+                            <span id="gv-landmark-country" style="color:#FFD700; font-weight:bold;">---</span>
+                        </div>
+                        <div>
+                            <span style="color:rgba(255,215,0,0.6); font-size: 13.5px;">COORDINATES:</span>
+                            <span id="gv-landmark-coords" style="color:#fff; font-family:monospace;">---</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 13.5px; color:rgba(255,255,255,0.6); margin-bottom:4px;">
+                        <span style="color:rgba(255,215,0,0.6);">ATTRIBUTION:</span>
+                        <span id="gv-landmark-author" style="color:#fff;">---</span> |
+                        <span id="gv-landmark-license" style="color:#00FFD1;">CC BY-SA 4.0</span>
+                    </div>
+                </div>
+
+                <div class="gv-lm-actions">
+                    <button id="gv-landmark-wiki-link" class="gv-svi-btn" style="border-color:#FFD700; color:#FFD700;">📖 WIKIPEDIA</button>
+                    <button id="gv-landmark-fly" class="gv-svi-btn primary" style="background:rgba(255,215,0,0.18); border-color:#FFD700; color:#FFD700;">🎯 FLY TO TARGET</button>
+                    <button id="gv-landmark-ask-ai" class="gv-svi-btn" style="border-color:var(--cyber-cyan); color:var(--cyber-cyan);">🛡 ASK ARGUS AI</button>
+                </div>
+            </div>
+
+            <!-- ─── OSINT Visual Geolocation Modal (pHash BK-Tree Reverse Search) ── -->
+            <div id="gv-visual-search-modal" class="hidden">
+                <div class="gv-lm-header" style="border-color:rgba(0,255,209,0.3);">
+                    <div class="gv-lm-title" style="color:var(--cyber-cyan);">
+                        <span>🔍</span>
+                        <span>OSINT VISUAL REVERSE GEOLOCATION</span>
+                        <span class="gv-lm-badge" style="border-color:var(--cyber-cyan); color:var(--cyber-cyan); background:rgba(0,255,209,0.15);">64-BIT DCT PHASH</span>
+                    </div>
+                    <button id="gv-visual-search-close" class="gv-lm-close" style="color:var(--cyber-cyan);">[X]</button>
+                </div>
+
+                <div class="gv-vs-dropzone" id="gv-vs-dropzone">
+                    <input type="file" id="gv-vs-file-input" accept="image/*" style="display:none;" />
+                    <img id="gv-vs-preview" src="" alt="Query Preview" style="max-height:100px; margin:0 auto 10px auto; display:none; border:1px solid var(--cyber-cyan); border-radius:2px;" />
+                    <div style="font-size:14px; color:var(--cyber-cyan); font-weight:bold; margin-bottom:4px;">
+                        📂 DROP RECONNAISSANCE PHOTO HERE OR CLICK TO UPLOAD
+                    </div>
+                    <div style="font-size: 13.5px; color:rgba(0,255,209,0.5);">
+                        Computes discrete cosine transform perceptual hash & queries 73,463 BK-Tree nodes in sub-milliseconds.
+                    </div>
+                </div>
+
+                <div id="gv-vs-status" style="font-size: 13.5px; color:#FFCC00; padding:0 14px 8px 14px; font-family:monospace;"></div>
+
+                <div id="gv-vs-results" style="max-height:260px; overflow-y:auto; padding:0 14px 12px 14px;">
+                    <!-- Matched landmarks rendered here -->
+                </div>
+            </div>
+
+            <!-- ─── Mapillary Street View Panel (floating, bottom right) ─ -->
+            <div id="gv-mapillary-panel" class="hidden">
+                <div class="gv-mapillary-header">
+                    <span>🗺 MAPILLARY STREET INTEL</span>
+                    <button id="gv-mapillary-close"
+                        style="background:none;border:none;color:#1DB954;cursor:pointer;font-size:13.5px;">[X]</button>
+                </div>
+                <div id="gv-mapillary-status">Enable Mapillary layer to load coverage.</div>
+                <div id="gv-mapillary-images"></div>
+            </div>
+        </div>
+
+    </div><!-- #gv-content -->
+
+    <!-- ╔═══════════════════════════════════════════════════════════════╗ -->
+    <!-- ║  STATUS BAR                                                   ║ -->
+    <!-- ╚═══════════════════════════════════════════════════════════════╝ -->
+    <div id="gv-status-bar">
+        <div class="gv-stat-item">
+            <span class="gv-stat-label">NODES:</span>
+            <span class="gv-stat-value" id="gv-count-nodes">0</span>
+        </div>
+        <span class="gv-stat-sep">│</span>
+        <div class="gv-stat-item">
+            <span class="gv-stat-label">ANOMALIES:</span>
+            <span class="gv-stat-value" id="gv-count-anomalies">0</span>
+        </div>
+        <span class="gv-stat-sep">│</span>
+        <div class="gv-stat-item">
+            <span class="gv-stat-label">INCIDENTS:</span>
+            <span class="gv-stat-value" id="gv-count-incidents">0</span>
+        </div>
+        <span class="gv-stat-sep">│</span>
+        <div class="gv-stat-item">
+            <span class="gv-stat-label">AREA:</span>
+            <span class="gv-stat-value" style="color:rgba(0,255,209,0.5); font-size: 13.5px;">SF BAY // 37.77°N</span>
+        </div>
+        <span id="gv-status-text">SYSTEM READY</span>
+    </div>
+
+</div><!-- #groundview-root -->
+
+<!-- GroundView module bundle — lazy-loads MapLibre only when this page opens -->
+<script type="module" src="{{ url_for('static', filename='js/groundview-main.js') }}"></script>
+
+<!-- Hide loading overlay once map container is available -->
+<script>
+    // This runs immediately; the actual map initialization is in groundview-main.js
+    // We hide the loading overlay via the onMapReady callback in the JS controller.
+    // But also attach a safety timeout so the overlay clears if JS is slow.
+    setTimeout(() => {
+        const overlay = document.getElementById('gv-map-loading');
+        if (overlay) overlay.classList.add('hidden');
+    }, 8000);
+</script>
+
+<!-- Markdown & LaTeX Vendor Libraries -->
+<script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/katex.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/auto-render.min.js') }}"></script>
+
+<!-- Universal Tactical ARGUS AI Core Script -->
+<script src="{{ url_for('static', filename='js/argus-ai.js') }}"></script>
+
+</body>
+</html>

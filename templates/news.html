@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoVigilant Argus Eye — Global News Stream &amp; OSINT Wire</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📺</text></svg>" />
+
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="/static/css/maplibre-gl.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/static/css/cyberpunk.css">
+    <link rel="stylesheet" href="/static/css/argus-ai.css">
+    <link rel="stylesheet" href="/static/vendor/katex.min.css">
+    <link rel="stylesheet" href="/static/css/argus-kiosk.css">
+    <script src="/static/js/argus-kiosk.js"></script>
+
+    <!-- Google Fonts: Orbitron + Share Tech Mono -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/news.css">
+
+    <style>
+        :root {
+            --primary-color: #00FFD1;
+            --background-dark: #020a0a;
+            --card-background: rgba(5, 20, 20, 0.85);
+            --accent-glow: rgba(0, 255, 209, 0.3);
+            --border-color: rgba(0, 255, 209, 0.2);
+            --text-main: #00FFD1;
+            --text-dim: rgba(0, 255, 209, 0.6);
+            --neon-cyan: #00FFD1;
+            --neon-purple: #BC13FE;
+            --neon-pink: #FF0055;
+            --neon-orange: #FF9E00;
+            --neon-hot-pink: #FF10F0;
+            --glassmorphic-bg: rgba(255, 0, 85, 0.03);
+            --cyber-gradient: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            --panel-shadow: 0 0 20px rgba(0, 255, 209, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-dark);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Main Layout below tactical header */
+        .main-wrapper {
+            position: fixed;
+            top: 48px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        /* Tactical Search & Sub-Header Bar */
+        #news-search-bar {
+            display: flex;
+            align-items: center;
+            padding: 6px 18px;
+            background: rgba(2, 12, 18, 0.96);
+            border-bottom: 1px solid var(--border-color);
+            gap: 14px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 200;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            max-width: 580px;
+        }
+
+        .search-input-wrap i.fa-search {
+            position: absolute;
+            left: 12px;
+            color: var(--cyber-amber, #FFCC00);
+            opacity: 0.85;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        #news-search {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            border: 1px solid rgba(0, 255, 209, 0.25);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13.5px;
+            padding: 6px 115px 6px 34px;
+            outline: none;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+        }
+
+        #news-search:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 12px rgba(0, 255, 209, 0.3), inset 0 0 8px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        #news-search::placeholder {
+            color: rgba(0, 255, 209, 0.35);
+        }
+
+        .search-input-wrap .adv-toggle {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 255, 209, 0.08);
+            border: 1px solid rgba(0, 255, 209, 0.3);
+            color: var(--primary-color);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11.5px;
+            font-weight: bold;
+            padding: 4px 9px;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            letter-spacing: 0.8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            user-select: none;
+        }
+
+        .search-input-wrap .adv-toggle:hover {
+            background: rgba(0, 255, 209, 0.2);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(0, 255, 209, 0.3);
+        }
+
+        .search-input-wrap .adv-toggle.active {
+            background: rgba(255, 204, 0, 0.2);
+            border-color: #FFCC00;
+            color: #FFCC00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+        }
+
+        .news-status-badge {
+            font-size: 13px;
+            color: rgba(0, 255, 209, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            margin-left: auto;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Advanced Filters Panel */
+        .adv-filters-panel {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(2, 10, 16, 0.98);
+            border: 1px solid rgba(0, 255, 209, 0.25);
+            border-top: 2px solid #FFCC00;
+            padding: 14px 20px;
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            z-index: 1000;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+        }
+
+        .adv-filters-panel.active {
+            display: grid;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 0.75rem;
+            padding: 5px;
+            outline: none;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            border-color: var(--neon-pink);
+        }
+
+        /* News Dashboard & Map Container */
+        .content-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* News Dashboard (Left Panel) */
+        .news-dashboard {
+            width: 350px;
+            background: rgba(2, 10, 10, 0.9);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-header h3 {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trending-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .filter-chip {
+            padding: 3px 8px;
+            background: rgba(0, 255, 209, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 85, 0.1);
+            color: var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+        }
+
+        .filter-chip:nth-child(even):hover {
+            border-color: var(--neon-purple);
+            background: rgba(188, 19, 254, 0.1);
+            color: var(--neon-purple);
+            box-shadow: 0 0 10px rgba(188, 19, 254, 0.2);
+        }
+
+        .news-list {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .news-item {
+            background: var(--glassmorphic-bg);
+            border-left: 3px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 0 4px 4px 0;
+            transition: 0.3s;
+            cursor: pointer;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .news-item:hover {
+            background: rgba(0, 255, 209, 0.1);
+            transform: translateX(5px);
+            border-left-color: var(--neon-pink);
+            box-shadow: -5px 0 15px rgba(255, 0, 85, 0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes progress {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(400%);
+            }
+        }
+
+        .animate-progress {
+            animation: progress 2s infinite linear;
+        }
+
+        /* Glitch Effect */
+        .glitch {
+            position: relative;
+            animation: glitch-text 4s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-text {
+            0% {
+                text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan);
+            }
+
+            2% {
+                text-shadow: -2px 0 var(--neon-pink), 2px 0 var(--neon-cyan);
+            }
+
+            4% {
+                text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan);
+            }
+
+            100% {
+                text-shadow: 1px 0 var(--neon-pink), -1px 0 var(--neon-cyan);
+            }
+        }
+
+        .neon-border-pink {
+            border: 1px solid var(--neon-pink) !important;
+            box-shadow: 0 0 10px rgba(255, 16, 240, 0.2), inset 0 0 5px rgba(255, 16, 240, 0.1);
+        }
+
+        .cyber-logo-text {
+            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-hot-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .news-item {
+            background: rgba(255, 0, 85, 0.02);
+            border-left: 3px solid var(--neon-pink);
+            padding: 10px;
+            /* Reduced from 15px */
+            border-radius: 0 4px 4px 0;
+            transition: 0.3s;
+            cursor: pointer;
+            animation: slideIn 0.3s ease-out;
+            border-bottom: 1px solid rgba(255, 0, 85, 0.05);
+        }
+
+        .news-item:hover {
+            background: rgba(255, 0, 85, 0.08);
+            transform: translateX(8px);
+            border-left: 3px solid var(--neon-hot-pink);
+            box-shadow: -10px 0 20px rgba(255, 16, 240, 0.1);
+        }
+
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            color: var(--neon-hot-pink);
+            background: rgba(255, 16, 240, 0.1);
+            border-color: var(--neon-hot-pink);
+            box-shadow: 0 0 15px rgba(255, 16, 240, 0.3);
+        }
+
+        .news-source {
+            font-size: 0.7rem;
+            color: var(--neon-purple);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .news-title {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .news-tag {
+            padding: 1px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 0.6rem;
+        }
+
+        /* Map Panel */
+        .map-panel {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--neon-pink);
+        }
+
+        .news-open-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            font-size: 13.5px;
+            color: var(--neon-cyan);
+            background: rgba(0, 255, 209, 0.08);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .news-open-btn:hover {
+            color: #000;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 255, 209, 0.5);
+            text-decoration: none;
+        }
+
+        /* MapLibre Attribution & UI Overrides (GroundView Style) */
+        .maplibregl-ctrl-attrib {
+            background: rgba(2, 10, 15, 0.85) !important;
+            color: rgba(0, 255, 209, 0.4) !important;
+            font-size: 13.5px !important;
+            font-family: 'Share Tech Mono', monospace !important;
+        }
+
+        .maplibregl-ctrl-attrib a {
+            color: rgba(0, 255, 209, 0.6) !important;
+        }
+
+        .maplibregl-ctrl-group {
+            background: rgba(2, 10, 15, 0.9) !important;
+            border: 1px solid rgba(0, 255, 209, 0.25) !important;
+            border-radius: 2px !important;
+            box-shadow: 0 0 10px rgba(0, 255, 209, 0.1) !important;
+        }
+
+        .maplibregl-ctrl-group button {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(0, 255, 209, 0.15) !important;
+        }
+
+        .maplibregl-ctrl button span,
+        .maplibregl-ctrl-icon {
+            filter: invert(1) sepia(1) saturate(5) hue-rotate(140deg) !important;
+        }
+
+        /* HUD Corner Brackets */
+        .gv-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .gv-corner-tl { top: 4px; left: 4px; border-top: 1px solid var(--neon-cyan); border-left: 1px solid var(--neon-cyan); opacity: 0.4; }
+        .gv-corner-tr { top: 4px; right: 4px; border-top: 1px solid var(--neon-cyan); border-right: 1px solid var(--neon-cyan); opacity: 0.4; }
+        .gv-corner-bl { bottom: 4px; left: 4px; border-bottom: 1px solid var(--neon-cyan); border-left: 1px solid var(--neon-cyan); opacity: 0.4; }
+        .gv-corner-br { bottom: 4px; right: 4px; border-bottom: 1px solid var(--neon-cyan); border-right: 1px solid var(--neon-cyan); opacity: 0.4; }
+
+        /* Basemap Switcher Controls (GroundView Aesthetic) */
+        .gv-basemap-group {
+            display: flex;
+            gap: 4px;
+            background: rgba(2, 10, 10, 0.85);
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            backdrop-filter: blur(10px);
+        }
+
+        .gv-basemap-btn {
+            padding: 4px 8px;
+            font-size: 13.5px;
+            font-family: 'Share Tech Mono', monospace;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 209, 0.2);
+            color: rgba(0, 255, 209, 0.6);
+            cursor: pointer;
+            border-radius: 2px;
+            letter-spacing: 0.5px;
+            transition: all 0.15s ease;
+        }
+
+        .gv-basemap-btn:hover,
+        .gv-basemap-btn.active {
+            background: rgba(0, 255, 209, 0.18);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 255, 209, 0.3);
+        }
+
+        /* Marker Styles from earth.html */
+        .custom-cyber-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .marker-pulse {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        .marker-core {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Large Popup Styles from earth.html */
+        .large-popup {
+            --popup-accent: #FFCC00;
+            width: 420px;
+            max-height: 80vh;
+            padding: 18px;
+            font-size: 13.5px;
+            color: #EEE;
+            background: rgba(5, 5, 5, 0.95);
+            border: 1px solid var(--popup-accent);
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.1), inset 0 0 10px rgba(255, 204, 0, 0.05);
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            display: none;
+            backdrop-filter: blur(20px);
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            overflow-y: auto;
+            transition: border-color 0.3s ease;
+        }
+
+        .large-popup::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .large-popup::-webkit-scrollbar-thumb {
+            background: var(--popup-accent);
+        }
+
+        .sentiment-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 204, 0, 0.05);
+            border: 1px solid rgba(255, 204, 0, 0.1);
+        }
+
+        .sentiment-graph {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 40px;
+            margin-top: 10px;
+            border-bottom: 1px solid rgba(255, 204, 0, 0.2);
+        }
+
+        .graph-bar {
+            flex: 1;
+            background: var(--popup-accent);
+            min-height: 2px;
+            transition: 0.5s;
+        }
+
+        .news-mini-item {
+            border-left: 2px solid var(--popup-accent);
+            padding-left: 8px;
+            margin-top: 10px;
+            font-size: 13.5px;
+            color: #AAA;
+        }
+
+        .large-popup-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            font-size: 14px;
+            border: 1px solid var(--popup-accent);
+            background: transparent;
+            color: var(--popup-accent);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .large-popup-close:hover {
+            background: var(--popup-accent);
+            color: #000;
+        }
+
+        .large-popup h3 {
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--popup-accent);
+            font-size: 16.5px;
+            color: var(--popup-accent);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .large-popup .popup-title {
+            font-size: 14.5px;
+            margin-bottom: 12px;
+            color: #FFF;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        .large-popup .popup-data {
+            gap: 8px;
+            font-size: 14px;
+            display: grid;
+            grid-template-columns: 85px 1fr;
+        }
+
+        .large-popup .popup-data .data-label {
+            color: var(--popup-accent);
+            opacity: 0.6;
+            font-size: 13.5px;
+        }
+
+        .large-popup .popup-data .data-value {
+            color: var(--popup-accent);
+            text-align: right;
+        }
+
+        .large-popup .popup-data .data-value.active {
+            color: #00FF88;
+        }
+
+        .large-popup .popup-data .data-value.alert {
+            color: #FF2E82;
+        }
+
+        .large-popup .popup-footer {
+            margin-top: 15px;
+            font-size: 13.5px;
+            color: var(--popup-accent);
+            opacity: 0.4;
+            text-align: center;
+            border-top: 1px solid rgba(255, 204, 0, 0.1);
+            padding-top: 8px;
+        }
+
+        .flow-container {
+            grid-column: span 2;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 4px 0;
+            overflow: hidden;
+        }
+
+        .flow-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        /* Coord Display Style */
+        #coord-display {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(2, 10, 10, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13.5px;
+            color: var(--primary-color);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            /* Moved away from sidebar tooltip area */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            /* Stack vertically if needed or keep horizontal */
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .map-control-btn {
+            background: rgba(2, 10, 10, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .loc-toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-color);
+            font-size: 13.5px;
+            background: rgba(2, 10, 10, 0.8);
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .map-control-btn:hover {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+        }
+
+        /* Market Watch Panel */
+        .market-watch-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(188, 19, 254, 0.05);
+            border: 1px solid rgba(188, 19, 254, 0.2);
+            border-radius: 4px;
+        }
+
+        .market-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .market-selectors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .market-sel-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13.5px;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .market-sel-item input {
+            cursor: pointer;
+            accent-color: var(--neon-purple);
+        }
+
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .market-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .market-item.up {
+            color: #00FF88;
+        }
+
+        .market-item.down {
+            color: #FF2E82;
+        }
+
+        /* AI Analytics Panel */
+        .ai-analytics-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 255, 209, 0.05);
+            border: 1px solid rgba(0, 255, 209, 0.2);
+            border-left: 3px solid var(--primary-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-analytics-panel::before {
+            content: 'AI_CORE_ACTIVE';
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 13px;
+            opacity: 0.5;
+            color: var(--primary-color);
+        }
+
+        .analytics-text {
+            font-size: 14px;
+            line-height: 1.55;
+            color: #DDD;
+        }
+
+        /* Heatmap Scale */
+        .heatmap-scale {
+            position: absolute;
+            bottom: 20px;
+            right: 70px;
+            background: rgba(2, 10, 10, 0.85);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+        }
+
+        .scale-title {
+            font-size: 13px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .scale-bar {
+            width: 120px;
+            height: 10px;
+            background: linear-gradient(to right, #00BFFF, #00FF88, #FFFF00, #FF0055);
+            border-radius: 2px;
+        }
+
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        /* Custom Hashtag Area */
+        .custom-hashtag-input {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .custom-hashtag-input input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 14px;
+            padding: 6px 12px;
+            outline: none;
+        }
+
+        .add-tag-btn {
+            background: rgba(0, 255, 209, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 4px 12px;
+            font-size: 13.5px;
+            cursor: pointer;
+        }
+
+        .add-tag-btn:hover {
+            background: var(--primary-color);
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TACTICAL CLASSIFICATION HEADER -->
+    <header class="argus-header">
+        <div class="header-left">TOP SECRET // SI-TK // NOFORN</div>
+        <div class="header-center">
+            <span class="argus-logo-dot"></span>
+            <span style="font-family: var(--cyber-font-orbitron); font-size: 14px; font-weight: bold;">ARGUS</span>
+            <span style="color: rgba(0,255,209,0.4); font-size: 14px;">&#9673;</span>
+            <span style="color: var(--cyber-amber, #FFCC00); font-size: 14px; font-weight: bold; letter-spacing: 1px;">NEWS STREAM</span>
+            <span style="color: rgba(0,255,209,0.5); font-size: 13.5px;">// GLOBAL INTEL &amp; OSINT WIRE</span>
+            <button class="argus-nav-btn" onclick="window.location.href='/'"><i class="fas fa-home"></i> OVERVIEW</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/earth'"><i class="fas fa-globe"></i> 3D GLOBE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/ground'"><i class="fas fa-map"></i> GROUNDVIEW</button>
+            <button class="argus-nav-btn active" onclick="window.location.href='/news'"><i class="fas fa-satellite-dish"></i> NEWS STREAM</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/surveillance'"><i class="fas fa-wifi"></i> SURVEILLANCE</button>
+            <button class="argus-nav-btn" onclick="window.location.href='/newsnetworks'"><i class="fas fa-broadcast-tower"></i> NETWORKS</button>
+            <button class="argus-nav-btn open-argus-ai" id="btn-argus-core" style="color: var(--cyber-cyan); border-color: var(--cyber-cyan); font-weight: bold; background: rgba(0,255,209,0.14); cursor: pointer;" title="Open ARGUS AI Tactical Assistant"><i class="fas fa-shield-alt"></i> ARGUS CORE</button>
+        </div>
+        <div class="header-right">
+            <span class="argus-online-badge">&#9679; ONLINE</span>
+            <span id="argus-timestamp">REC 0000-00-00 00:00:00Z</span>
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <!-- Sub-header: Search & Real-Time Intel Controls -->
+        <div id="news-search-bar">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" id="news-search" placeholder="Enter keywords or identifiers..." autocomplete="off">
+                <div class="adv-toggle" onclick="toggleAdvFilters()">
+                    <i class="fas fa-sliders-h"></i> ADV FILTERS
+                </div>
+            </div>
+
+            <div class="adv-filters-panel" id="adv-filters">
+                <div class="filter-group">
+                    <label>Sort By</label>
+                    <select id="filter-sort">
+                        <option value="publishedAt">LATEST INTEL</option>
+                        <option value="relevancy">RELEVANCY MATCH</option>
+                        <option value="popularity">VIRAL TRENDING</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Timeframe</label>
+                    <select id="filter-time">
+                        <option value="">ALL CHRONO</option>
+                        <option value="24h">LAST 24 CYCLES</option>
+                        <option value="7d">WEEKLY DATA</option>
+                        <option value="30d">MONTHLY LOG</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Language</label>
+                    <select id="filter-lang">
+                        <option value="en">ENGLISH EN</option>
+                        <option value="es">SPANISH ES</option>
+                        <option value="fr">FRENCH FR</option>
+                        <option value="de">GERMAN DE</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Target Region</label>
+                    <select id="filter-region">
+                        <option value="">GLOBAL (DEFAULT)</option>
+                        <option value="INTERNATIONAL">INTERNATIONAL</option>
+                        <option value="USA">USA</option>
+                        <option value="INDIA">INDIA</option>
+                        <option value="EUROPE">EUROPE</option>
+                        <option value="AFRICA">AFRICA</option>
+                        <option value="UAE">UAE</option>
+                        <option value="IRAN">IRAN</option>
+                        <option value="CHINA">CHINA</option>
+                        <option value="RUSSIA">RUSSIA</option>
+                        <option value="JAPAN">JAPAN</option>
+                        <option value="AUSTRALIA">AUSTRALIA</option>
+                        <option value="TAIWAN">TAIWAN</option>
+                        <option value="SOUTH_KOREA">SOUTH KOREA</option>
+                        <option value="ISRAEL">ISRAEL</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="news-status-badge">
+                <span style="color: var(--cyber-amber, #FFCC00); font-size: 12.5px;">GLOBAL SENTIMENT:</span>
+                <span class="font-bold" id="global-sentiment-val" style="color: var(--cyber-cyan, #00FFD1); font-size: 13.5px; font-weight: bold;">74%</span>
+                <span style="margin: 0 8px; opacity: 0.25; color: var(--cyber-cyan);">|</span>
+                <span class="pulse-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#00FF88; box-shadow:0 0 8px #00FF88;"></span>
+                <span style="color: #00FF88; font-size: 12.5px; font-weight: bold; letter-spacing: 0.5px;">UPLINK STABLE</span>
+            </div>
+        </div>
+
+        <div class="content-container">
+            <!-- News Dashboard -->
+            <aside class="news-dashboard">
+                <div class="panel-header">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:5px;">
+                        <h3 style="margin:0;"><i class="fas fa-bolt"></i> HOT SECTOR TRENDS</h3>
+                        <div style="display:flex; gap:5px;">
+                            <span class="text-neon-pink"
+                                style="cursor:pointer; font-size: 13.5px; border:1px solid var(--neon-pink); padding:2px 7px;"
+                                onclick="location.href='/newsnetworks'">NETWORKS</span>
+                            <span class="text-neon-pink"
+                                style="cursor:pointer; font-size: 13.5px; border:1px solid var(--neon-pink); padding:2px 7px;"
+                                onclick="location.href='/manewsnet'">MANEWS</span>
+                        </div>
+                    </div>
+                    <div class="custom-hashtag-input">
+                        <input type="text" id="custom-tag-input" placeholder="ADD CUSTOM HASHTAG...">
+                        <button class="add-tag-btn" onclick="addCustomTag()">ADD</button>
+                    </div>
+                    <div class="trending-filters" id="trending-filters" style="margin-bottom: 15px;">
+                        <span class="filter-chip" onclick="searchByLocation('Kyiv')">#Kyiv</span>
+                        <span class="filter-chip" onclick="searchByLocation('Taiwan')">#Taiwan</span>
+                        <span class="filter-chip" onclick="searchByLocation('Gaza')">#Gaza</span>
+                        <span class="filter-chip" onclick="searchByLocation('NATO')">#NATO</span>
+                        <span class="filter-chip" onclick="searchByLocation('OPEC')">#OPEC</span>
+                        <span class="filter-chip" onclick="searchByLocation('BRICS')">#BRICS</span>
+                        <span class="filter-chip" onclick="searchByLocation('Unrest')">#Unrest</span>
+                        <span class="filter-chip" onclick="searchByLocation('Election')">#Election</span>
+                    </div>
+
+                    <div class="intel-levels flex gap-2">
+                        <button
+                            class="flex-1 py-1.5 px-2.5 border border-[#00FFD133] rounded text-[13px] hover:bg-[#00FFD122] transition-colors"
+                            onclick="setNewsType('local')">LOCAL INTEL</button>
+                        <button
+                            class="flex-1 py-1.5 px-2.5 border border-[#00FFD133] rounded text-[13px] hover:bg-[#00FFD122] transition-colors"
+                            onclick="setNewsType('national')">NATIONAL DATA</button>
+                        <button
+                            class="flex-1 py-1.5 px-2.5 border border-[#00FFD133] rounded text-[13px] hover:bg-[#00FFD122] transition-colors"
+                            onclick="setNewsType('all')">GLOBAL STREAM</button>
+                    </div>
+                </div>
+                <div class="news-list" id="news-list">
+                    <!-- Loading State -->
+                    <div class="p-10 text-center text-dim italic">
+                        SELECT SECTOR ON MAP FOR INTEL...
+                    </div>
+                </div>
+
+                <!-- AI Geopolitics Analytics -->
+                <div class="ai-analytics-panel">
+                    <div class="analytics-text" id="ai-analytics-content">
+                        INITIALIZING AI CORE... ANALYZING GLOBAL TENSIONS...
+                    </div>
+                </div>
+
+                <!-- Market Watch Panel -->
+                <div class="market-watch-panel">
+                    <div class="market-header">
+                        <span style="font-size: 14.5px; color:var(--neon-purple);">MARKET INTELLIGENCE</span>
+                        <span style="font-size: 13px; opacity:0.5;">LIVE_DATA_FEED</span>
+                    </div>
+                    <div class="market-selectors">
+                        <label class="market-sel-item"><input type="checkbox" id="chk-oil" checked
+                                onchange="fetchMarketData()">
+                            OIL</label>
+                        <label class="market-sel-item"><input type="checkbox" id="chk-gold" checked
+                                onchange="fetchMarketData()"> GOLD</label>
+                        <label class="market-sel-item"><input type="checkbox" id="chk-silver" checked
+                                onchange="fetchMarketData()"> SILVER</label>
+                        <label class="market-sel-item"><input type="checkbox" id="chk-crypto" checked
+                                onchange="fetchMarketData()"> CRYPTO</label>
+                    </div>
+                    <div class="market-grid" id="market-grid">
+                        <!-- Market items will be injected here -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Map Panel -->
+            <main class="map-panel">
+                <div class="gv-corner gv-corner-tl"></div>
+                <div class="gv-corner gv-corner-tr"></div>
+                <div class="gv-corner gv-corner-bl"></div>
+                <div class="gv-corner gv-corner-br"></div>
+                <div id="map"></div>
+                <div id="coord-display">
+                    <i class="fas fa-crosshairs" style="color:var(--neon-pink); font-size: 14px;"></i>
+                    <span id="coord-text">LAT: 0.0000 LON: 0.0000</span>
+                </div>
+                <div class="heatmap-scale" id="heatmap-scale">
+                    <span class="scale-title">Sentiment Intensity</span>
+                    <div class="scale-bar"></div>
+                    <div class="scale-labels">
+                        <span>STABLE</span>
+                        <span>HIGH TENSION</span>
+                    </div>
+                </div>
+            </main>
+
+            <div class="map-controls">
+                <div class="gv-basemap-group">
+                    <button class="gv-basemap-btn active" id="basemap-tactical" onclick="switchBasemap('tactical')">🌑 TACTICAL</button>
+                    <button class="gv-basemap-btn" id="basemap-streets" onclick="switchBasemap('streets')">🗺 STREETS</button>
+                    <button class="gv-basemap-btn" id="basemap-satellite" onclick="switchBasemap('satellite')">🛰 SATELLITE</button>
+                </div>
+                <div class="loc-toggle-item">
+                    <input type="checkbox" id="location-only-chk">
+                    <label for="location-only-chk">DATA ONLY</label>
+                </div>
+                <div class="loc-toggle-item">
+                    <input type="checkbox" id="heatmap-toggle-chk" checked onchange="toggleHeatmap(this.checked)">
+                    <label for="heatmap-toggle-chk">HEATMAP</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Intelligence Detail / Sector Popup Modal -->
+        <div id="large-popup" class="large-popup"></div>
+
+        <!-- Scripts -->
+        <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+        <script>
+            let currentLat = null;
+            let currentLon = null;
+            let currentType = 'all';
+            let currentSentiment = null;
+            let currentBasemap = 'tactical';
+            let clickMarker = null;
+
+            // Sentiment Heatmap Hotspots Data
+            const initialHotspots = [
+                { lat: 50.45, lon: 30.52, score: 0.9 }, // Kyiv
+                { lat: 25.03, lon: 121.56, score: 0.8 }, // Taiwan
+                { lat: 31.5, lon: 34.46, score: 0.95 }, // Gaza
+                { lat: 38.9, lon: -77.03, score: 0.6 }, // DC
+                { lat: 35.67, lon: 139.65, score: 0.4 }, // Tokyo
+                { lat: 55.75, lon: 37.61, score: 0.85 }, // Moscow
+                { lat: 34.05, lon: -118.24, score: 0.5 }, // LA
+                { lat: 22.31, lon: 114.16, score: 0.7 }, // Hong Kong
+                { lat: 1.35, lon: 103.81, score: 0.3 }, // Singapore
+                { lat: 28.61, lon: 77.20, score: 0.6 }, // Delhi
+                { lat: 41.00, lon: 28.97, score: 0.75 }, // Istanbul
+                { lat: 48.85, lon: 2.35, score: 0.5 }, // Paris
+                { lat: 51.50, lon: -0.12, score: 0.5 }, // London
+                { lat: -33.86, lon: 151.20, score: 0.4 }, // Sydney
+                { lat: -23.55, lon: -46.63, score: 0.6 }, // Sao Paulo
+                { lat: 30.04, lon: 31.23, score: 0.8 }, // Cairo
+                { lat: 52.52, lon: 13.40, score: 0.5 }, // Berlin
+                { lat: 59.32, lon: 18.06, score: 0.3 }, // Stockholm
+                { lat: 55.67, lon: 12.56, score: 0.3 }, // Copenhagen
+                { lat: 64.12, lon: -21.82, score: 0.2 }, // Reykjavik
+                { lat: -1.29, lon: 36.82, score: 0.7 }, // Nairobi
+                { lat: 23.11, lon: -82.36, score: 0.5 }, // Havana
+                { lat: 19.43, lon: -99.13, score: 0.6 }, // Mexico City
+                { lat: 37.56, lon: 126.97, score: 0.7 }, // Seoul
+                { lat: -34.60, lon: -58.38, score: 0.5 } // Buenos Aires
+            ];
+
+            let hotspotFeatures = initialHotspots.map(h => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [h.lon, h.lat] },
+                properties: { intensity: h.score }
+            }));
+
+            function getHotspotGeoJSON() {
+                return {
+                    type: 'FeatureCollection',
+                    features: hotspotFeatures
+                };
+            }
+
+            function addHotspot(lat, lon, score) {
+                if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon)) return;
+                hotspotFeatures.push({
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [lon, lat] },
+                    properties: { intensity: score || 0.7 }
+                });
+                if (map && map.getSource && map.getSource('sentiment-heat-src')) {
+                    map.getSource('sentiment-heat-src').setData(getHotspotGeoJSON());
+                }
+            }
+
+            // MapLibre Initialization
+            const map = new maplibregl.Map({
+                container: 'map',
+                style: '/api/groundview/map-style?theme=tactical',
+                center: [20, 25],
+                zoom: 2.2,
+                pitch: 0,
+                bearing: 0,
+                attributionControl: false,
+                antialias: true
+            });
+
+            map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+            map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+            function setupHeatmapLayer() {
+                if (!map || !map.isStyleLoaded()) return;
+                if (!map.getSource('sentiment-heat-src')) {
+                    map.addSource('sentiment-heat-src', {
+                        type: 'geojson',
+                        data: getHotspotGeoJSON()
+                    });
+                }
+                if (!map.getLayer('sentiment-heat-layer')) {
+                    map.addLayer({
+                        id: 'sentiment-heat-layer',
+                        type: 'heatmap',
+                        source: 'sentiment-heat-src',
+                        paint: {
+                            'heatmap-weight': ['get', 'intensity'],
+                            'heatmap-intensity': 1.2,
+                            'heatmap-color': [
+                                'interpolate', ['linear'], ['heatmap-density'],
+                                0, 'rgba(0, 0, 0, 0)',
+                                0.2, '#00BFFF',
+                                0.4, '#00FF88',
+                                0.7, '#FFFF00',
+                                1.0, '#FF0055'
+                            ],
+                            'heatmap-radius': 28,
+                            'heatmap-opacity': 0.75
+                        }
+                    });
+                }
+            }
+
+            map.on('load', () => {
+                setupHeatmapLayer();
+            });
+
+            function switchBasemap(mode) {
+                if (currentBasemap === mode) return;
+                currentBasemap = mode;
+
+                document.querySelectorAll('.gv-basemap-btn').forEach(btn => btn.classList.remove('active'));
+                const activeBtn = document.getElementById('basemap-' + mode);
+                if (activeBtn) activeBtn.classList.add('active');
+
+                map.setStyle(`/api/groundview/map-style?theme=${mode}&t=${Date.now()}`);
+                map.once('style.load', () => {
+                    setupHeatmapLayer();
+                    if (clickMarker) {
+                        clickMarker.addTo(map);
+                    }
+                });
+            }
+
+            function toggleHeatmap(visible) {
+                if (!map || !map.getLayer('sentiment-heat-layer')) return;
+                map.setLayoutProperty('sentiment-heat-layer', 'visibility', visible ? 'visible' : 'none');
+                const scale = document.getElementById('heatmap-scale');
+                if (scale) scale.style.display = visible ? 'flex' : 'none';
+            }
+
+            function updateCyberMarker(lat, lng) {
+                if (clickMarker) {
+                    clickMarker.remove();
+                }
+                const el = document.createElement('div');
+                el.className = 'custom-cyber-marker';
+                el.innerHTML = '<div class="marker-pulse"></div><div class="marker-core"></div>';
+                clickMarker = new maplibregl.Marker({ element: el })
+                    .setLngLat([lng, lat])
+                    .addTo(map);
+            }
+
+            // Helper Functions
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return String(unsafe)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function getValidUrl(art) {
+                if (art && art.url && typeof art.url === 'string' && art.url !== '#' && art.url.startsWith('http')) {
+                    return art.url;
+                }
+                const title = (art && art.title) ? art.title : 'global news';
+                return 'https://news.google.com/search?q=' + encodeURIComponent(title);
+            }
+
+            // Fetch Location & Weather Info
+            async function showLocationInfo(lat, lng) {
+                console.log(`[ARGUS_NEWS] Fetching info for Sector: ${lat}, ${lng}`);
+                const largePopup = document.getElementById('large-popup');
+                if (!largePopup) return;
+                const dataOnly = document.getElementById('location-only-chk')?.checked;
+
+                try {
+                    updateCyberMarker(lat, lng);
+
+                    const weatherApiKey = '03f7c36882c73928f25631bd235ebc4e';
+                    const tomtomApiKey = 'bCjXLonSI6Ja1jIHO726Thi6YqeDKZjK';
+
+                    const requests = [
+                        axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${weatherApiKey}&units=metric`).catch(() => ({ data: { weather: [{ main: 'N/A' }], main: { temp: 'N/A' } } })),
+                        axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`).catch(() => ({ data: { display_name: 'Unknown Sector' } })),
+                        axios.get(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=${lat},${lng}&key=${tomtomApiKey}`).catch(() => ({ data: {} }))
+                    ];
+
+                    if (!dataOnly) {
+                        requests.push(axios.get(`/api/geo/news?lat=${lat}&lon=${lng}`).catch((err) => {
+                            console.error("[ARGUS_NEWS] Geo News Fetch Failed:", err);
+                            return { data: { sentiment: { label: 'OFFLINE', score: 0.5 }, news: [] } };
+                        }));
+                    }
+
+                    const responses = await Promise.all(requests);
+                    console.log("[ARGUS_NEWS] Responses received:", responses);
+                    const weatherRes = responses[0];
+                    const nominatimRes = responses[1];
+                    const trafficRes = responses[2];
+                    const geoNewsRes = !dataOnly ? responses[3] : null;
+
+                    const placeName = nominatimRes.data.display_name || 'Unknown Sector';
+                    const traffic = trafficRes.data.flowSegmentData;
+
+                    let trafficStatus = 'FLUID', trafficClass = 'active', speedRatio = 100, trafficDelay = 0;
+                    if (traffic) {
+                        speedRatio = (traffic.currentSpeed / traffic.freeFlowSpeed) * 100;
+                        trafficDelay = Math.max(0, 100 - speedRatio);
+                        if (speedRatio < 40) { trafficStatus = 'HEAVY'; trafficClass = 'alert'; }
+                        else if (speedRatio < 70) { trafficStatus = 'MODERATE'; trafficClass = ''; }
+                    }
+
+                    let sentimentHtml = '';
+                    let newsHtml = '';
+
+                    if (geoNewsRes && geoNewsRes.data && geoNewsRes.data.sentiment) {
+                        console.log("[ARGUS_NEWS] Rendering Sentiment Data:", geoNewsRes.data.sentiment);
+                        const sentiment = geoNewsRes.data.sentiment;
+                        currentSentiment = sentiment;
+                        sentimentHtml = `
+                        <div class="sentiment-container">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size: 14px; color:var(--popup-accent);">SENTIMENT INDEX: ${escapeHtml(sentiment.label)}</span>
+                                <span style="font-size: 14.5px; color:${sentiment.score > 0.5 ? '#00FF88' : '#FF2E82'}">${(sentiment.score * 100).toFixed(0)}%</span>
+                            </div>
+                            ${renderSentimentGraph(sentiment.score)}
+                        </div>
+                    `;
+                        addHotspot(lat, lng, sentiment.score);
+
+                        if (geoNewsRes.data.news && geoNewsRes.data.news.length > 0) {
+                            newsHtml = '<div style="margin-top:15px; border-top:1px solid rgba(255,204,0,0.1); padding-top:10px;"><span style="font-size: 14px; color:var(--popup-accent);">INTEL BRIEF (CLICK TO OPEN)</span>';
+                            newsHtml += geoNewsRes.data.news.slice(0, 3).map(n => {
+                                const nUrl = getValidUrl(n);
+                                return `
+                                <div class="news-mini-item" style="cursor:pointer; transition:background 0.2s;" onclick="window.open('${escapeHtml(nUrl)}', '_blank')">
+                                    <div style="color:#FFF; display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+                                        <span>${escapeHtml(n.title)}</span>
+                                        <i class="fas fa-external-link-alt" style="font-size: 13.5px; color:var(--neon-pink); margin-top:2px;"></i>
+                                    </div>
+                                    <div style="font-size: 13.5px; opacity:0.6;">${escapeHtml(n.source)} | ${escapeHtml(n.time || '')}</div>
+                                </div>
+                            `}).join('');
+                            newsHtml += '</div>';
+                        }
+                    } else {
+                        console.warn("[ARGUS_NEWS] No sentiment data found in response.");
+                    }
+
+                    largePopup.innerHTML = `
+                    <div class="large-popup-close" onclick="document.getElementById('large-popup').style.display='none'">×</div>
+                    <h3><span>Sector Intel</span><span style="font-size: 13.5px; color:var(--neon-pink);">v9.5</span></h3>
+                    <div class="popup-title">${escapeHtml(placeName)}</div>
+                    <div class="popup-data">
+                        <span class="data-label">COORD X</span><span class="data-value">${lat.toFixed(4)}</span>
+                        <span class="data-label">COORD Y</span><span class="data-value">${lng.toFixed(4)}</span>
+                        <span class="data-label">SYSTEM ENV</span><span class="data-value">${weatherRes.data.weather[0].main}</span>
+                        <span class="data-label">THERMAL</span><span class="data-value">${weatherRes.data.main.temp}°C</span>
+                        <div style="grid-column: span 2; margin-top: 10px; border-top: 1px solid rgba(255,204,0,0.1); padding-top: 8px;">
+                            <span style="color:var(--popup-accent); font-size: 13.5px;">TRAFFIC UPLINK</span>
+                        </div>
+                        <span class="data-label">VEL FLOW</span><span class="data-value">${traffic ? traffic.currentSpeed : 'N/A'} KM/H</span>
+                        <span class="data-label">TRAFFIC ST</span><span class="data-value ${trafficClass}">${trafficStatus}</span>
+                        <span class="data-label">DELAY ST</span><span class="data-value">${trafficDelay.toFixed(1)}%</span>
+                        <div class="flow-container"><div class="flow-bar" style="width: ${Math.min(100, speedRatio)}%; background: ${trafficClass === 'alert' ? '#FF2E82' : (trafficClass === 'active' ? '#00FF88' : '#FFCC00')}"></div></div>
+                    </div>
+                    ${sentimentHtml}
+                    ${newsHtml}
+                    <div class="popup-footer">STABLE UPLINK || TRACE STATUS: ACTIVE</div>
+                `;
+                    largePopup.style.display = 'block';
+                } catch (err) {
+                    console.error('Location Info Error:', err);
+                }
+            }
+
+            // News Fetching Logic
+            async function fetchNews(lat = currentLat, lon = currentLon, q = '', type = currentType, region = '') {
+                console.log(`[ARGUS_NEWS] fetchNews initiated: lat=${lat}, lon=${lon}, q=${q}, type=${type}, region=${region}`);
+                const listEl = document.getElementById('news-list');
+                listEl.innerHTML = `<div class="p-10 text-center text-dim animate-pulse">
+                <span class="block mb-2 text-neon-pink">DECRYPTING_INTEL_STREAM...</span>
+                <div class="w-full bg-border h-1 overflow-hidden">
+                    <div class="bg-neon-pink h-full animate-progress" style="width: 30%"></div>
+                </div>
+            </div>`;
+
+                const sort = document.getElementById('filter-sort').value;
+                const timeframe = document.getElementById('filter-time').value;
+                const lang = document.getElementById('filter-lang').value;
+                if (!region) {
+                    region = document.getElementById('filter-region').value;
+                }
+
+                let fromDate = '';
+                if (timeframe) {
+                    const now = new Date();
+                    if (timeframe === '24h') now.setHours(now.getHours() - 24);
+                    else if (timeframe === '7d') now.setDate(now.getDate() - 7);
+                    else if (timeframe === '30d') now.setDate(now.getDate() - 30);
+                    fromDate = now.toISOString().split('T')[0];
+                }
+
+                try {
+                    let url = `/api/news/advanced?q=${encodeURIComponent(q)}&type=${type}&sortBy=${sort}&language=${lang}&pageSize=100&region=${region}`;
+                    if (fromDate) url += `&from=${fromDate}`;
+
+                    if (lat && lon) {
+                        url += `&lat=${lat}&lon=${lon}`;
+                        currentLat = lat;
+                        currentLon = lon;
+                    }
+                    currentType = type;
+
+                    console.log(`[ARGUS_NEWS] Requesting: ${url}`);
+                    const res = await axios.get(url);
+                    const data = res.data;
+                    console.log(`[ARGUS_NEWS] fetchNews Result:`, data);
+
+                    renderNews(data.articles);
+
+                    if (lat && lon && data.articles && data.articles.length > 0) {
+                        const score = (currentSentiment && currentSentiment.score) ? currentSentiment.score : 0.5;
+                        addHotspot(lat, lon, score);
+                    }
+                } catch (err) {
+                    console.error("[ARGUS_NEWS] fetchNews Failed:", err);
+                    listEl.innerHTML = `
+                    <div class="p-8 text-center" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;">
+                        <div style="color:var(--neon-pink); font-size:12px; font-weight:bold; letter-spacing:1px;">UPLINK_STATUS: STANDBY</div>
+                        <div style="font-size:11px; color:var(--text-dim); max-width:280px; line-height:1.4;">Signal intercepted with degraded uplink. Re-establishing telemetry...</div>
+                        <button onclick="fetchNews(null, null, 'global geopolitical intelligence', 'all')" 
+                                style="padding:6px 14px; background:rgba(255,46,130,0.15); border:1px solid var(--neon-pink); color:#FFF; font-size:11px; cursor:pointer; border-radius:3px; font-family:'Share Tech Mono', monospace; letter-spacing:0.5px; transition:all 0.2s;"
+                                onmouseover="this.style.background='rgba(255,46,130,0.3)'"
+                                onmouseout="this.style.background='rgba(255,46,130,0.15)'">
+                            RE-ESTABLISH GLOBAL STREAM
+                        </button>
+                    </div>`;
+                }
+            }
+
+            function toggleAdvFilters() {
+                const panel = document.getElementById('adv-filters');
+                const btn = document.querySelector('.adv-toggle');
+                if (panel) panel.classList.toggle('active');
+                if (btn) btn.classList.toggle('active');
+            }
+
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('adv-filters');
+                const btn = document.querySelector('.adv-toggle');
+                if (panel && panel.classList.contains('active')) {
+                    if (!panel.contains(e.target) && btn && !btn.contains(e.target)) {
+                        panel.classList.remove('active');
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+
+            function setNewsType(type) {
+                currentType = type;
+                fetchNews(currentLat, currentLon, document.getElementById('news-search').value, type);
+            }
+
+            function renderNews(articles) {
+                const listEl = document.getElementById('news-list');
+                window.currentArticles = articles || [];
+                if (!articles || articles.length === 0) {
+                    listEl.innerHTML = '<div class="p-10 text-center text-dim">NO_INTEL_FOUND_IN_SECTOR</div>';
+                    return;
+                }
+
+                listEl.innerHTML = `
+                <div style="padding: 10px; border-bottom: 1px solid rgba(0, 255, 209, 0.1); font-size: 13.5px; color: var(--text-dim); display: flex; justify-content: space-between;">
+                    <span>SIGNALS_INTERCEPTED: ${articles.length} VERIFIED INTEL REPORTS</span>
+                    <span>UPLINK: ACTIVE</span>
+                </div>
+            ` + articles.map((art, idx) => {
+                const targetUrl = getValidUrl(art);
+                const pubDate = art.published ? new Date(art.published).toLocaleTimeString() : 'RECENT';
+                return `
+                <div class="news-item" onclick="openNewsIntel(${idx})">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="news-source">${escapeHtml(art.source || 'INTEL_FEED')}</span>
+                        <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="news-open-btn" onclick="event.stopPropagation();" title="Redirect to source news page in new tab">
+                            <i class="fas fa-external-link-alt"></i> OPEN ↗
+                        </a>
+                    </div>
+                    <div class="news-title">${escapeHtml(art.title || '')}</div>
+                    <div class="news-meta">
+                        <span>${pubDate}</span>
+                        <div style="display:flex; gap: 6px; align-items:center;">
+                            <span class="news-tag" style="border-color:var(--neon-pink); color:var(--neon-pink);">INTEL_SCAN</span>
+                            <span class="news-tag">${escapeHtml(art.type || 'STREAM')}</span>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+            }
+
+            async function openNewsIntel(idx) {
+                const art = (window.currentArticles && window.currentArticles[idx]) ? window.currentArticles[idx] : null;
+                if (!art) return;
+                
+                const largePopup = document.getElementById('large-popup');
+                if (!largePopup) return;
+
+                const url = getValidUrl(art);
+                const title = art.title || 'Intel Intercept';
+                const source = art.source || 'GLOBAL INTEL';
+                const desc = art.description ? `<div style="font-size: 14.5px; color:#CCC; margin-bottom:12px; border-left:2px solid var(--neon-pink); padding-left:8px; line-height:1.5;">${escapeHtml(art.description)}</div>` : '';
+
+                largePopup.innerHTML = `
+                    <div class="large-popup-close" onclick="document.getElementById('large-popup').style.display='none'">×</div>
+                    <h3><span>SIGNAL_INTELLIGENCE</span><span style="font-size: 13.5px; color:var(--neon-pink);">v10.2</span></h3>
+                    <div class="popup-title" style="border-bottom:none; margin-bottom:4px; font-size:16px; color:#FFF;">${escapeHtml(title)}</div>
+                    <div style="font-size: 13.5px; color:var(--text-dim); margin-bottom:12px;">SOURCE: ${escapeHtml(source)}</div>
+                    ${desc}
+                    
+                    <div id="ai-loading" class="p-4 text-center">
+                        <div class="animate-pulse text-neon-pink mb-4">DECRYPTING_AI_SENTIMENT...</div>
+                        <div class="w-full bg-border h-1 overflow-hidden">
+                            <div class="bg-neon-pink h-full animate-progress"></div>
+                        </div>
+                    </div>
+                    <div id="ai-report" class="analytics-text" style="display:none; margin-bottom:16px; font-size:14px; line-height:1.55;"></div>
+
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px; border-top:1px solid rgba(0,255,209,0.2); padding-top:12px;">
+                        <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; background:var(--neon-pink); color:#FFF; text-decoration:none; font-weight:bold; font-size:14px; border-radius:3px; box-shadow:0 0 12px rgba(255,0,85,0.4); text-align:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            <i class="fas fa-external-link-alt"></i> OPEN FULL ARTICLE ↗
+                        </a>
+                        <button onclick="window.location.href='${escapeHtml(url)}'" style="padding:8px; background:rgba(0,255,209,0.1); border:1px solid var(--border-color); color:var(--neon-cyan); font-size: 14px; cursor:pointer; border-radius:3px;">
+                            REDIRECT IN TAB
+                        </button>
+                        <button onclick="document.getElementById('large-popup').style.display='none'" style="padding:6px; background:transparent; border:1px solid rgba(255,255,255,0.15); color:#888; font-size: 13.5px; cursor:pointer; border-radius:3px;">
+                            CLOSE INTEL
+                        </button>
+                    </div>
+                `;
+                largePopup.style.display = 'block';
+
+                try {
+                    const res = await axios.post('/api/news/analyze', { content: `${title} - ${art.description || ''}` });
+                    document.getElementById('ai-loading').style.display = 'none';
+                    const rep = document.getElementById('ai-report');
+                    rep.style.display = 'block';
+                    rep.innerHTML = `<span style="color:var(--neon-cyan);">AI ANALYSIS:</span> ${escapeHtml(res.data.analysis)}`;
+                } catch (err) {
+                    document.getElementById('ai-loading').style.display = 'none';
+                    const rep = document.getElementById('ai-report');
+                    rep.style.display = 'block';
+                    rep.innerHTML = `<span style="color:var(--neon-pink);">AI DECRYPTION FAILED.</span>`;
+                }
+            }
+
+            async function searchByLocation(loc) {
+                document.getElementById('news-search').value = loc;
+                fetchNews(null, null, loc);
+                try {
+                    const geoRes = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(loc)}&format=json&limit=1`);
+                    if (geoRes.data && geoRes.data.length > 0) {
+                        const item = geoRes.data[0];
+                        const lat = parseFloat(item.lat);
+                        const lon = parseFloat(item.lon);
+                        updateCyberMarker(lat, lon);
+                        map.flyTo({ center: [lon, lat], zoom: 5, speed: 1.2 });
+                        showLocationInfo(lat, lon);
+                    }
+                } catch (e) {
+                    console.debug("Geocode on search skipped", e);
+                }
+            }
+
+            function renderSentimentGraph(score) {
+                let html = '<div class="sentiment-graph">';
+                for (let i = 0; i < 15; i++) {
+                    const height = (Math.sin((i / 14) * Math.PI) * 0.4 + 0.6) * score * 35;
+                    html += `<div class="graph-bar" style="height: ${height.toFixed(0)}px; opacity: ${0.3 + (i / 20)}"></div>`;
+                }
+                html += '</div>';
+                return html;
+            }
+
+            function addCustomTag() {
+                const input = document.getElementById('custom-tag-input');
+                const tag = input.value.trim();
+                if (tag) {
+                    const container = document.getElementById('trending-filters');
+                    const chip = document.createElement('span');
+                    chip.className = 'filter-chip';
+                    chip.innerText = `#${tag}`;
+                    chip.onclick = () => searchByLocation(tag);
+                    container.prepend(chip);
+                    input.value = '';
+                    searchByLocation(tag);
+                }
+            }
+
+            async function fetchMarketData() {
+                const grid = document.getElementById('market-grid');
+                try {
+                    const res = await axios.get('/api/market/data');
+                    const data = res.data;
+                    let items = [];
+
+                    if (document.getElementById('chk-oil').checked) items.push({ name: 'BRENT_CRUDE', price: data.brent_crude.price, change: data.brent_crude.change });
+                    if (document.getElementById('chk-gold').checked) items.push({ name: 'GOLD_OUNCE', price: data.gold.price, change: data.gold.change });
+                    if (document.getElementById('chk-silver').checked) items.push({ name: 'SILVER_OUNCE', price: data.silver.price, change: data.silver.change });
+                    if (document.getElementById('chk-crypto').checked) items.push({ name: 'BTC_USD', price: data.btc.price, change: data.btc.change });
+
+                    grid.innerHTML = items.map(item => `
+                    <div class="market-item ${item.change >= 0 ? 'up' : 'down'}">
+                        <span>${item.name}</span>
+                        <span>${item.price}</span>
+                    </div>
+                `).join('');
+                } catch (err) {
+                    grid.innerHTML = '<div style="grid-column: span 2; font-size: 13.5px; opacity: 0.5;">MARKET_SYNC_ERROR</div>';
+                }
+            }
+
+            async function generateAIAnalytics() {
+                try {
+                    const res = await axios.post('/api/news/analyze', { content: "Provide a general geopolitical update based on latest global trends." });
+                    document.getElementById('ai-analytics-content').innerText = res.data.analysis;
+                } catch (err) {
+                    document.getElementById('ai-analytics-content').innerText = "AI_OFFLINE: RETRYING_UPLINK...";
+                }
+            }
+
+            // Map Click & Mousemove Listeners (MapLibre GL JS)
+            map.on('click', async (e) => {
+                const lat = e.lngLat.lat;
+                const lng = e.lngLat.lng;
+                showLocationInfo(lat, lng);
+
+                // Update Sidebar Header with Sector Info
+                try {
+                    const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                    const addr = geoRes.data.address;
+                    const city = addr.city || addr.town || addr.village || addr.suburb || addr.borough;
+                    const country = addr.country;
+                    const area = city || country || "Unknown Sector";
+
+                    const isLocal = !!city;
+
+                    document.querySelector('.panel-header h3').innerHTML = `<i class="fas fa-bolt"></i> SECTOR INTEL: ${area.toUpperCase()}`;
+
+                    let searchQuery = area;
+                    if (city && country) {
+                        searchQuery = `${city}, ${country}`;
+                    }
+
+                    document.getElementById('news-search').value = searchQuery;
+
+                    let newsType = 'all';
+                    if (isLocal) newsType = 'local';
+
+                    let targetRegion = '';
+                    const regionSelect = document.getElementById('filter-region');
+                    if (country) {
+                        for (let i = 0; i < regionSelect.options.length; i++) {
+                            const opt = regionSelect.options[i];
+                            if (opt.value === country.toUpperCase() || opt.text.toUpperCase() === country.toUpperCase()) {
+                                targetRegion = opt.value;
+                                regionSelect.value = targetRegion;
+                                break;
+                            }
+                        }
+                    }
+
+                    fetchNews(lat, lng, searchQuery, newsType, targetRegion);
+                } catch (err) {
+                    document.querySelector('.panel-header h3').innerHTML = `<i class="fas fa-bolt"></i> SECTOR INTEL: ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+                    fetchNews(lat, lng, '', 'all', '');
+                }
+
+                document.getElementById('coord-text').innerText = `LAT: ${lat.toFixed(5)} LON: ${lng.toFixed(5)}`;
+            });
+
+            map.on('mousemove', (e) => {
+                const lat = e.lngLat.lat;
+                const lng = e.lngLat.lng;
+                document.getElementById('coord-text').innerText = `LAT: ${lat.toFixed(5)} LON: ${lng.toFixed(5)}`;
+            });
+
+            document.getElementById('news-search').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchByLocation(e.target.value);
+                }
+            });
+
+            // Initial Load
+            window.onload = () => {
+                fetchNews(null, null, 'global geopolitical intelligence', 'all');
+                fetchMarketData();
+                generateAIAnalytics();
+                setInterval(fetchMarketData, 60000); // Refresh markets every min
+                setInterval(generateAIAnalytics, 120000); // New AI insight every 2m (to save tokens)
+
+                // Populate hashtags with more items
+                const filters = document.getElementById('trending-filters');
+                const extraTags = [
+                    'UKRAINE', 'MIDDLE_EAST', 'INFLATION', 'ENERGY_CRISIS', 'SUDAN', 'ARCTIC',
+                    'NORDSTREAM', 'CYBER_WAR', 'SILICON', 'AI_REGULATION', 'SPACE_GEOPOLITICS',
+                    'BRICS+', 'QUAD', 'AUKUS', 'SOUTH_CHINA_SEA', 'BALKANS', 'AFRICA_TRADE'
+                ];
+                extraTags.forEach(tag => {
+                    const chip = document.createElement('span');
+                    chip.className = 'filter-chip';
+                    chip.innerText = `#${tag}`;
+                    chip.onclick = () => searchByLocation(tag);
+                    filters.appendChild(chip);
+                });
+            }
+        </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const hamburger = document.getElementById('hamburger');
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (hamburger && sidebar) {
+            hamburger.addEventListener('click', function () {
+                const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
+                hamburger.setAttribute('aria-expanded', !isOpen);
+                sidebar.classList.toggle('open');
+                if (backdrop) backdrop.classList.toggle('show');
+            });
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener('click', function () {
+                if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+                if (sidebar) sidebar.classList.remove('open');
+                backdrop.classList.remove('show');
+            });
+        }
+
+        // Menu item navigation
+        document.querySelectorAll('.menu-item[data-href]').forEach(item => {
+            item.addEventListener('click', function () {
+                window.location.href = this.getAttribute('data-href');
+            });
+        });
+    });
+</script>
+
+<script>
+    function updateTimestamp() {
+        const now = new Date();
+        const iso = now.toISOString().replace('T', ' ').replace(/\..+/, 'Z');
+        const el = document.getElementById('argus-timestamp');
+        if (el) el.textContent = 'REC ' + iso;
+    }
+    setInterval(updateTimestamp, 1000);
+    updateTimestamp();
+</script>
+<script src="/static/js/argus-ai.js"></script>
+
+</body>
+
+</html>

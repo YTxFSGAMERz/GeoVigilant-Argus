@@ -82,6 +82,14 @@ function assembleDistPlugin() {
         }
       }
 
+      // 7. Inject apiUrl into dist/static/js/argus-config.js
+      const distArgusConfig = resolve(distDir, 'static/js/argus-config.js');
+      if (fs.existsSync(distArgusConfig)) {
+        let jsContent = fs.readFileSync(distArgusConfig, 'utf-8');
+        jsContent = jsContent.replace(/%VITE_API_URL%/g, apiUrl);
+        fs.writeFileSync(distArgusConfig, jsContent, 'utf-8');
+      }
+
       console.log('[Vite] Complete dist/ distribution assembled for Vercel deployment.');
     },
   };

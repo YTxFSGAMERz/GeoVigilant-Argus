@@ -1,17 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/earth", "destination": "/earth.html" },
-    { "source": "/ground", "destination": "/groundview.html" },
-    { "source": "/news", "destination": "/news.html" },
-    { "source": "/surveillance", "destination": "/wifi-search.html" },
-    { "source": "/map-w", "destination": "/wifi-search.html" },
-    { "source": "/newsnetworks", "destination": "/newsnetworks.html" },
-    { "source": "/earthnetworks", "destination": "/newsnetworks.html" },
-    { "source": "/social/reddit", "destination": "/social/reddit.html" },
-    { "source": "/social/twitter", "destination": "/social/twitter.html" },
-    { "source": "/social", "destination": "/news.html" },
-    { "source": "/(tor-chat|profiles|neural|cctv|mobile|alerts|fit|settings)", "destination": "/earth.html" }
+    { "source": "/ground", "destination": "/groundview" },
+    { "source": "/surveillance", "destination": "/wifi-search" },
+    { "source": "/map-w", "destination": "/wifi-search" },
+    { "source": "/earthnetworks", "destination": "/newsnetworks" },
+    { "source": "/social", "destination": "/news" },
+    { "source": "/(tor-chat|profiles|neural|cctv|mobile|alerts|fit|settings)", "destination": "/earth" }
   ]
 }

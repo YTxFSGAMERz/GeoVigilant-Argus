@@ -11,3 +11,11 @@ __pycache__
 node_modules
 scratch
 *.exe
+api/
+*.py
+requirements.txt
+render.yaml
+*.bat
+*.sh
+torrc
+API Required.txt

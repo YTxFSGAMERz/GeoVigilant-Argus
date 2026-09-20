@@ -65,6 +65,8 @@ ehthumbs.db
 *.temp
 *.bak
 *.db.bak
+socio.db
+*.db-journal
 *.orig
 .pytest_cache/
 test_write.txt

@@ -325,6 +325,81 @@ To add your own optional API keys securely without putting them in the codebase:
 
 ---
 
+## 🌐 PRODUCTION DEPLOYMENT (VERCEL + RENDER)
+
+GeoVigilant Argus Eye uses a high-performance decoupled cloud architecture:
+* **Vercel**: Hosts the static multi-page frontend (`dist/`), Cesium 3D HUD, and 2D GroundView at edge latency.
+* **Render**: Hosts the Flask 3.1 WSGI backend API via Gunicorn with real-time live telemetry proxies and OSINT engines.
+* **Database**: Runs on lightweight embedded SQLite caches (`geosent.db`, `socio.db`). Zero paid or external database servers required.
+
+```
+[VERCEL EDGE FRONTEND]  ---- HTTPS API Calls (VITE_API_URL) ---->  [RENDER BACKEND API]
+(dist/ static distribution)                                          (Gunicorn 0.0.0.0:$PORT)
+                                                                               │
+                                                                   [EXTERNAL DATA SOURCES]
+                                                                (OpenSky, USGS, NASA, AIS, etc.)
+```
+
+### 🛠️ Step 1: Deploy Backend on Render
+
+1. Log in to your [Render Dashboard](https://dashboard.render.com/) and click **New +** → **Web Service** (or use **Blueprint** pointing to `render.yaml`).
+2. Connect your GitHub repository `YTxFSGAMERz/GeoVigilant-Argus`.
+3. Configure service parameters:
+   * **Name**: `geovigilant-argus-api`
+   * **Environment**: `Python`
+   * **Region**: Oregon (or nearest)
+   * **Branch**: `main`
+   * **Build Command**: `pip install -r requirements.txt`
+   * **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
+   * **Plan**: `Free`
+4. Under **Advanced** → **Health Check Path**, set `/health`.
+5. Add Environment Variables:
+   * `PYTHON_VERSION`: `3.12.0`
+   * `FLASK_DEBUG`: `false`
+   * `HOST`: `0.0.0.0`
+   * `SECRET_KEY`: `<generate-a-random-hex-string>`
+   * *(Optional)* Add any telemetry API keys (e.g. `OPENCELLID_API_KEY`, `AIS_API_KEY`, `OPENROUTER_API_KEY`).
+6. Click **Create Web Service**. Wait for the build to complete and copy your live backend URL (e.g., `https://geovigilant-argus-api.onrender.com`).
+
+### ⚡ Step 2: Deploy Frontend on Vercel
+
+1. Log in to [Vercel](https://vercel.com/) and click **Add New...** → **Project**.
+2. Import the `YTxFSGAMERz/GeoVigilant-Argus` repository.
+3. Configure build & deployment settings:
+   * **Framework Preset**: `Vite`
+   * **Root Directory**: `./` (leave default)
+   * **Build Command**: `npm run build`
+   * **Output Directory**: `dist`
+4. Under **Environment Variables**, add:
+   * `VITE_API_URL`: `https://your-render-service.onrender.com` (use your actual Render URL from Step 1)
+5. Click **Deploy**. Vercel will run `npm run build`, assemble `dist/`, and provision your production URL (e.g., `https://geovigilant-argus.vercel.app`).
+
+### 🔗 Step 3: Configure Cross-Origin Synchronization (CORS)
+
+1. Return to your Render Dashboard for `geovigilant-argus-api`.
+2. Under **Environment Variables**, set:
+   * `FRONTEND_URL`: `https://geovigilant-argus.vercel.app` (your actual Vercel domain)
+3. Trigger a manual deploy (or Render will automatically restart with the new variable).
+4. Now your frontend on Vercel and backend on Render can securely communicate with CORS credentials enabled.
+
+### 🩺 Health & Verification Endpoints
+
+* **Render Health Check**: `GET https://your-backend.onrender.com/health` → `{"status": "ok"}`
+* **System Telemetry**: `GET https://your-backend.onrender.com/api/sys/memory`
+* **Local Test Suite**:
+  ```bash
+  npm test        # Vitest pipeline and cryptographic unit tests
+  npm run build   # Production Vite bundle and dist/ assembly
+  ```
+
+### 💡 Known Free-Tier Characteristics
+
+* **Render Cold Starts**: On Render's free tier, inactive services spin down after 15 minutes of inactivity. The first request after spindown may take 30–50 seconds to boot the Python environment.
+* **Vercel Edge**: The frontend runs 24/7 with 0ms cold start latency on the Vercel Edge Global CDN.
+* **Cost**: $0.00 / month forever.
+
+---
+
 ## ⌨️ OPERATOR KEYBOARD SHORTCUTS
 
 | Shortcut | Command | Action |

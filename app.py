@@ -94,17 +94,76 @@ app.jinja_env.auto_reload = True
 OPENCELLID_API_KEY = os.environ.get("OPENCELLID_API_KEY", "")
 from Socio import socio_bp
 app.register_blueprint(socio_bp, url_prefix='/socio')
+try:
+    app.register_blueprint(socio_bp, name='socio_root')
+except Exception:
+    pass
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB request size limit (DoS prevention)
 
+# Production CORS & Security Headers
+FRONTEND_URL = os.environ.get('FRONTEND_URL', '').rstrip('/')
+
+ALLOWED_CORS_ORIGINS = {
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+    'http://localhost:5000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:4173',
+    'http://127.0.0.1:5000',
+}
+if FRONTEND_URL:
+    ALLOWED_CORS_ORIGINS.add(FRONTEND_URL)
+
+def _is_origin_allowed(origin: str) -> bool:
+    if not origin:
+        return False
+    clean_origin = origin.rstrip('/')
+    if clean_origin in ALLOWED_CORS_ORIGINS:
+        return True
+    if FRONTEND_URL and clean_origin.lower() == FRONTEND_URL.lower():
+        return True
+    if not FRONTEND_URL and (clean_origin.endswith('.vercel.app') or 'localhost' in clean_origin or '127.0.0.1' in clean_origin):
+        return True
+    return False
+
+@app.before_request
+def handle_options_preflight():
+    if request.method == 'OPTIONS':
+        origin = request.headers.get('Origin', '')
+        res = make_response('', 204)
+        if _is_origin_allowed(origin):
+            res.headers['Access-Control-Allow-Origin'] = origin
+            res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, HEAD'
+            res.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept'
+            res.headers['Access-Control-Allow-Credentials'] = 'true'
+            res.headers['Access-Control-Max-Age'] = '86400'
+        return res
+
 @app.after_request
 def apply_security_headers(response):
-    """Apply defensive security headers to all responses."""
+    """Apply defensive security headers and production CORS headers to all responses."""
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+    origin = request.headers.get('Origin', '')
+    if _is_origin_allowed(origin):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, HEAD'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Max-Age'] = '86400'
+
     return response
+
+@app.route('/health')
+def health_check():
+    """Lightweight Render health check endpoint."""
+    return jsonify({"status": "ok"})
 
 def is_safe_public_url(url: str) -> bool:
     """
@@ -649,7 +708,7 @@ def groundview_map_style():
                     # ESRI satellite proxied through Flask for browser reliability
                     'esri-satellite': {
                         'type': 'raster',
-                        'tiles': ['/api/groundview/tiles/satellite/{z}/{y}/{x}'],
+                        'tiles': [f"{request.host_url.rstrip('/')}/api/groundview/tiles/satellite/{{z}}/{{y}}/{{x}}"],
                         'tileSize': 256,
                         'minzoom': 0,
                         'maxzoom': 19,
@@ -6029,7 +6088,7 @@ def sys_memory_status():
 
 if __name__ == "__main__":
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    host = os.environ.get('HOST', '127.0.0.1')
+    host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
     app.run(host=host, port=port, debug=debug_mode)
 

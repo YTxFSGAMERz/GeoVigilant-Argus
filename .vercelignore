@@ -1,8 +1,9 @@
 tor-expert-bundle*
 geosent_chroma_db
 geosent.db
-geodata
-images
+socio.db
+ARGUS_DATASET
+uploads
 .git
 .gemini
 __pycache__
@@ -10,7 +11,3 @@ __pycache__
 node_modules
 scratch
 *.exe
-index.html
-news.html
-wifi-search.html
-

@@ -138,10 +138,12 @@ def init_db():
                 )''')
     
     conn.commit()
-
-    c.execute("SELECT COUNT(*) FROM users")
-    count = c.fetchone()[0]
     conn.close()
+
+try:
+    init_db()
+except Exception as _e:
+    pass
 
 
 logging.basicConfig(level=logging.INFO)

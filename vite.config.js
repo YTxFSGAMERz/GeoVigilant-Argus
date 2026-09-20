@@ -2,15 +2,23 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import fs from 'fs';
 
-function copyMapLibreWorkerPlugin() {
+function assembleDistPlugin() {
   return {
-    name: 'copy-maplibre-worker',
+    name: 'assemble-dist-plugin',
     closeBundle() {
+      const distDir = resolve(__dirname, 'dist');
+      if (!fs.existsSync(distDir)) {
+        fs.mkdirSync(distDir, { recursive: true });
+      }
+
+      // 1. Copy MapLibre worker and shared runtime to static/js and dist/static/js
       const srcWorker = resolve(__dirname, 'node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs');
       const srcShared = resolve(__dirname, 'node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs');
       const outDirs = [
         resolve(__dirname, 'static/js/chunks'),
         resolve(__dirname, 'static/js'),
+        resolve(distDir, 'static/js/chunks'),
+        resolve(distDir, 'static/js'),
       ];
 
       for (const dir of outDirs) {
@@ -18,13 +26,67 @@ function copyMapLibreWorkerPlugin() {
         if (fs.existsSync(srcWorker)) fs.copyFileSync(srcWorker, resolve(dir, 'maplibre-gl-worker.mjs'));
         if (fs.existsSync(srcShared)) fs.copyFileSync(srcShared, resolve(dir, 'maplibre-gl-shared.mjs'));
       }
+
+      // 2. Copy Service Worker globe cache
       const swSrc = resolve(__dirname, 'public/sw-globe-cache.js');
-      const swDest = resolve(__dirname, 'static/sw-globe-cache.js');
-      if (fs.existsSync(swSrc)) fs.copyFileSync(swSrc, swDest);
-      console.log('[Vite] MapLibre worker and SW globe cache copied.');
+      if (fs.existsSync(swSrc)) {
+        fs.copyFileSync(swSrc, resolve(__dirname, 'static/sw-globe-cache.js'));
+        fs.copyFileSync(swSrc, resolve(distDir, 'static/sw-globe-cache.js'));
+        fs.copyFileSync(swSrc, resolve(distDir, 'sw-globe-cache.js'));
+      }
+
+      // 3. Copy entire static folder to dist/static
+      const staticSrc = resolve(__dirname, 'static');
+      const staticDest = resolve(distDir, 'static');
+      if (fs.existsSync(staticSrc)) {
+        fs.cpSync(staticSrc, staticDest, { recursive: true, force: true });
+      }
+
+      // 4. Sync compiled bundles from dist/static/js to static/js (for local python app.py)
+      const distStaticJs = resolve(distDir, 'static/js');
+      const localStaticJs = resolve(__dirname, 'static/js');
+      if (fs.existsSync(distStaticJs)) {
+        fs.cpSync(distStaticJs, localStaticJs, { recursive: true, force: true });
+      }
+
+      // 5. Copy and prepare HTML pages for Vercel production
+      const apiUrl = process.env.VITE_API_URL || '';
+      const htmlFiles = [
+        'index.html',
+        'earth.html',
+        'groundview.html',
+        'news.html',
+        'newsnetworks.html',
+        'wifi-search.html',
+      ];
+
+      for (const file of htmlFiles) {
+        const srcFile = resolve(__dirname, file);
+        if (fs.existsSync(srcFile)) {
+          let content = fs.readFileSync(srcFile, 'utf-8');
+          content = content.replace(/%VITE_API_URL%/g, apiUrl);
+          fs.writeFileSync(resolve(distDir, file), content, 'utf-8');
+        }
+      }
+
+      // 6. Copy and prepare social subpages
+      const socialSrc = resolve(__dirname, 'social');
+      const socialDest = resolve(distDir, 'social');
+      if (!fs.existsSync(socialDest)) fs.mkdirSync(socialDest, { recursive: true });
+      for (const file of ['reddit.html', 'twitter.html']) {
+        const srcFile = resolve(socialSrc, file);
+        if (fs.existsSync(srcFile)) {
+          let content = fs.readFileSync(srcFile, 'utf-8');
+          content = content.replace(/%VITE_API_URL%/g, apiUrl);
+          fs.writeFileSync(resolve(socialDest, file), content, 'utf-8');
+        }
+      }
+
+      console.log('[Vite] Complete dist/ distribution assembled for Vercel deployment.');
     },
   };
 }
+
 function routeRewritePlugin() {
   return {
     name: 'route-rewrite-plugin',
@@ -112,7 +174,7 @@ function routeRewritePlugin() {
 }
 
 export default defineConfig({
-  plugins: [copyMapLibreWorkerPlugin(), routeRewritePlugin()],
+  plugins: [assembleDistPlugin(), routeRewritePlugin()],
   server: {
     host: true,
     watch: {
@@ -171,32 +233,25 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 3000,
-    outDir: 'static/js',
+    outDir: 'dist',
     emptyOutDir: false,
     rollupOptions: {
       input: {
-        // Existing Globe entry
         'globe-main': resolve(__dirname, 'globe/src/main.js'),
-        // New GroundView entry — completely separate bundle
         'groundview-main': resolve(__dirname, 'src/groundview/main.js'),
       },
       external: [
-        // @mapillary/mapillary-js is an optional future dependency.
-        // Excluded from build until `npm install @mapillary/mapillary-js` is run.
         '@mapillary/mapillary-js',
       ],
       output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][extname]',
+        entryFileNames: 'static/js/[name].js',
+        chunkFileNames: 'static/js/chunks/[name]-[hash].js',
+        assetFileNames: 'static/assets/[name]-[hash][extname]',
         manualChunks: {
           turf: ['@turf/turf'],
-          // maplibre-gl only lands in GroundView's chunk graph, never globe's
           maplibre: ['maplibre-gl'],
         }
       }
     }
   }
 });
-
-

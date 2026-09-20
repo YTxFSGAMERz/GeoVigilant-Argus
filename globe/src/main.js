@@ -2528,7 +2528,7 @@ ANALYZING SECTOR: <span class="text-cyan">${lat}°${latStr} ${lon}°${lonStr}</s
       }
     } else if (feed_type === 'mjpeg') {
       // MJPEG motion JPEG — proxied through our backend to bypass CORS
-      const proxyUrl = `/api/geo/cctv-stream?url=${encodeURIComponent(feed_url)}`;
+      const proxyUrl = (window.apiUrl ? window.apiUrl(`/api/geo/cctv-stream?url=${encodeURIComponent(feed_url)}`) : `/api/geo/cctv-stream?url=${encodeURIComponent(feed_url)}`);
       container.innerHTML = `
         <div class="cctv-video-wrap">
           <img src="${proxyUrl}" style="${baseStyle}" alt="LIVE STREAM">
@@ -2540,7 +2540,7 @@ ANALYZING SECTOR: <span class="text-cyan">${lat}°${latStr} ${lon}°${lonStr}</s
       if (img) img.onerror = () => { this._removeDeadCamera(props.id, 'STREAM OFFLINE'); };
     } else if (feed_type === 'image') {
       // Snapshot — proxy + auto-refresh every 30 s
-      const snap = () => `/api/geo/cctv-stream?url=${encodeURIComponent(feed_url)}&_t=${Date.now()}`;
+      const snap = () => (window.apiUrl ? window.apiUrl(`/api/geo/cctv-stream?url=${encodeURIComponent(feed_url)}&_t=${Date.now()}`) : `/api/geo/cctv-stream?url=${encodeURIComponent(feed_url)}&_t=${Date.now()}`);
       container.innerHTML = `
         <div class="cctv-video-wrap">
           <img id="cctv-snap" src="${snap()}" style="${baseStyle}" alt="LIVE SNAPSHOT">

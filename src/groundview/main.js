@@ -777,7 +777,7 @@ class GroundViewController {
       img.style.opacity = '0.3';
       img.onload = () => { img.style.opacity = '1'; };
       img.onerror = () => { img.style.opacity = '0.8'; };
-      img.src = `/api/groundview/streetscapes/image/${id}`;
+      img.src = (window.apiUrl ? window.apiUrl(`/api/groundview/streetscapes/image/${id}`) : `/api/groundview/streetscapes/image/${id}`);
     }
 
     modal.classList.remove('hidden');

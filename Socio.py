@@ -1775,20 +1775,35 @@ def send_discord_both():
     
 @socio_bp.route("/")
 def index():
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception:
+        frontend_url = os.environ.get("FRONTEND_URL", "https://geovigilant-argus.vercel.app")
+        return jsonify({
+            "status": "online",
+            "service": "GeoVigilant Argus API Gateway",
+            "version": "1.0.0",
+            "health": "/health",
+            "frontend_url": frontend_url
+        }), 200
 
 # Twitter OSINT Page
 @socio_bp.route("/social/twitter")
-
 def twitter_osint():
-    return render_template("social/twitter.html")
-
+    try:
+        return render_template("social/twitter.html")
+    except Exception:
+        frontend_url = os.environ.get("FRONTEND_URL", "https://geovigilant-argus.vercel.app")
+        return redirect(f"{frontend_url}/social/twitter.html")
 
 # Reddit OSINT Page
 @socio_bp.route("/social/reddit")
-
 def reddit_osint():
-    return render_template("social/reddit.html")
+    try:
+        return render_template("social/reddit.html")
+    except Exception:
+        frontend_url = os.environ.get("FRONTEND_URL", "https://geovigilant-argus.vercel.app")
+        return redirect(f"{frontend_url}/social/reddit.html")
 
 
 

@@ -108,11 +108,13 @@ class StreetscapesService:
         return self._geojson_cache or {"type": "FeatureCollection", "features": []}
 
     def get_image_path(self, image_id: int):
-        """Returns the absolute file path of an image if it exists."""
+        """Returns the absolute file path or Hugging Face CDN URL of an image."""
         img_path = os.path.join(IMAGES_DIR, f"{image_id}.png")
         if os.path.exists(img_path):
             return img_path
-        return None
+        # Cloud CDN fallback from Hugging Face Dataset
+        hf_repo = os.environ.get("ARGUS_HF_DATASET", "YTxFSGAMERz/ARGUS_DATASET")
+        return f"https://huggingface.co/datasets/{hf_repo}/resolve/main/data/streetscapes/images/{image_id}.png"
 
     def get_metadata(self, image_id: int):
         """Returns full metadata for a specific observation point."""

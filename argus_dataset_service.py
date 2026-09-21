@@ -79,6 +79,14 @@ class ArgusDatasetService:
             return True
 
         if not os.path.exists(DB_PATH):
+            logger.info("[ArgusDatasetService] state_tracker.db not found. Triggering Hugging Face index sync...")
+            try:
+                from scripts.sync_hf_dataset import sync
+                sync()
+            except Exception as e:
+                logger.warning("[ArgusDatasetService] Automatic sync failed: %s", e)
+
+        if not os.path.exists(DB_PATH):
             logger.warning("[ArgusDatasetService] state_tracker.db not found at %s", DB_PATH)
             return False
 
@@ -289,16 +297,20 @@ class ArgusDatasetService:
         return results[:limit]
 
     def get_image_path(self, image_id: str) -> Optional[str]:
-        """Resolves local absolute path on disk for a given image_id."""
+        """Resolves local absolute path on disk or Hugging Face CDN URL for a given image_id."""
         try:
             with self._get_db() as conn:
                 cur = conn.cursor()
                 cur.execute("SELECT local_path FROM assets WHERE image_id = ? LIMIT 1", (image_id,))
                 row = cur.fetchone()
                 if row and row["local_path"]:
+                    rel_path = row["local_path"].replace('\\', '/')
                     path = os.path.join(DATASET_DIR, row["local_path"])
                     if os.path.exists(path):
                         return path
+                    # Cloud CDN fallback: Resolve directly from Hugging Face Dataset CDN (30GB library)
+                    hf_repo = os.environ.get("ARGUS_HF_DATASET", "YTxFSGAMERz/ARGUS_DATASET")
+                    return f"https://huggingface.co/datasets/{hf_repo}/resolve/main/ARGUS_DATASET/{rel_path}"
         except Exception as exc:
             logger.error("[ArgusDatasetService] Image path lookup error: %s", exc)
         return None

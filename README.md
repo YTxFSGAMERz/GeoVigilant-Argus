@@ -349,7 +349,7 @@ GeoVigilant Argus Eye uses a high-performance decoupled cloud architecture:
    * **Environment**: `Python`
    * **Region**: Oregon (or nearest)
    * **Branch**: `main`
-   * **Build Command**: `pip install -r requirements.txt`
+   * **Build Command**: `pip install -r requirements.txt && python scripts/sync_hf_dataset.py`
    * **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
    * **Plan**: `Free`
 4. Under **Advanced** → **Health Check Path**, set `/health`.
@@ -357,6 +357,7 @@ GeoVigilant Argus Eye uses a high-performance decoupled cloud architecture:
    * `PYTHON_VERSION`: `3.12.0`
    * `FLASK_DEBUG`: `false`
    * `HOST`: `0.0.0.0`
+   * `ARGUS_HF_DATASET`: `YTxFSGAMERz/ARGUS_DATASET`
    * `SECRET_KEY`: `<generate-a-random-hex-string>`
    * *(Optional)* Add any telemetry API keys (e.g. `OPENCELLID_API_KEY`, `AIS_API_KEY`, `OPENROUTER_API_KEY`).
 6. Click **Create Web Service**. Wait for the build to complete and copy your live backend URL (e.g., `https://geovigilant-argus-api.onrender.com`).
@@ -382,6 +383,21 @@ GeoVigilant Argus Eye uses a high-performance decoupled cloud architecture:
 3. Trigger a manual deploy (or Render will automatically restart with the new variable).
 4. Now your frontend on Vercel and backend on Render can securely communicate with CORS credentials enabled.
 
+### ⏰ Step 4: 24/7 Keep-Alive via GitHub Actions (Zero Cold Starts)
+
+To eliminate Render's 15-minute inactivity spin-down for **$0.00 forever**, this repository includes an automated GitHub Actions workflow [`.github/workflows/render_keep_alive.yml`](./.github/workflows/render_keep_alive.yml):
+* **Trigger**: Scheduled cron running every 10 minutes (`*/10 * * * *`) + manual dispatch.
+* **Default Target**: Pings `https://geovigilant-argus-api.onrender.com/health`.
+* **Custom URL**: If your Render service has a different URL, add `RENDER_API_URL` under your GitHub Repo **Settings** → **Secrets and variables** → **Actions**.
+* **Result**: Render stays warm and awake 24/7 with zero sleeping and zero cold starts!
+
+### 📦 30GB Landmark & Streetscape Dataset Integration (Hugging Face)
+
+GeoVigilant Argus Eye connects directly to the 30GB+ landmark image library hosted on Hugging Face:
+* **Index Sync**: During container build, `scripts/sync_hf_dataset.py` downloads lightweight index files (`state_tracker.db`, `phash_bktree.index`, `places.csv`, `coords.csv`) taking under ~250 MB disk space.
+* **On-Demand CDN Streaming**: When an image is requested via `/api/argus/images/<image_id>`, the backend automatically redirects (HTTP 302) to the global Hugging Face Dataset CDN (`https://huggingface.co/datasets/YTxFSGAMERz/ARGUS_DATASET/`).
+* **Storage Cost**: **$0.00 / month** with zero local disk footprint for 74,000+ high-res images.
+
 ### 🩺 Health & Verification Endpoints
 
 * **Render Health Check**: `GET https://your-backend.onrender.com/health` → `{"status": "ok"}`
@@ -394,7 +410,7 @@ GeoVigilant Argus Eye uses a high-performance decoupled cloud architecture:
 
 ### 💡 Known Free-Tier Characteristics
 
-* **Render Cold Starts**: On Render's free tier, inactive services spin down after 15 minutes of inactivity. The first request after spindown may take 30–50 seconds to boot the Python environment.
+* **Zero Cold Starts**: With the GitHub Actions keep-alive workflow pinging every 10 minutes, Render never enters sleep mode.
 * **Vercel Edge**: The frontend runs 24/7 with 0ms cold start latency on the Vercel Edge Global CDN.
 * **Cost**: $0.00 / month forever.
 

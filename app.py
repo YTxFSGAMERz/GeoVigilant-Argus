@@ -818,10 +818,14 @@ def get_streetscapes_geojson():
 def get_streetscape_image(image_id):
     """Serves the PNG street image for a given observation point ID."""
     from streetscapes_service import streetscapes_service
-    from flask import send_file, abort
+    from flask import send_file, redirect, abort
     img_path = streetscapes_service.get_image_path(image_id)
     if not img_path:
         abort(404)
+    if img_path.startswith(('http://', 'https://')):
+        res = redirect(img_path, code=302)
+        res.headers['Cache-Control'] = 'public, max-age=86400'
+        return res
     return send_file(img_path, mimetype='image/png', max_age=86400)
 
 
@@ -909,10 +913,14 @@ def get_argus_places_nearby():
 def get_argus_image(image_id):
     """Serves high-resolution JPG image binary for a given image_id."""
     from argus_dataset_service import argus_dataset_service
-    from flask import send_file, abort
+    from flask import send_file, redirect, abort
     img_path = argus_dataset_service.get_image_path(image_id)
     if not img_path:
         abort(404)
+    if img_path.startswith(('http://', 'https://')):
+        res = redirect(img_path, code=302)
+        res.headers['Cache-Control'] = 'public, max-age=86400'
+        return res
     return send_file(img_path, mimetype='image/jpeg', max_age=86400)
 
 

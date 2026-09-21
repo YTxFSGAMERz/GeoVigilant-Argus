@@ -78,6 +78,7 @@ ARGUS_DATASET/
 
 # Tor Runtime Data
 tor-expert-bundle-windows-i686-15.0.19/data/tor/
+data/tor/
 
 .vercel
 .env*
